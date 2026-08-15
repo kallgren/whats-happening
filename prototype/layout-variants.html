@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROTOTYP — layout (ticket 07)</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --card: #fff;
+    --ink: #1a1a1a;
+    --dim: #6b6b6b;
+    --line: #e4e1dc;
+    --accent: #1b4d3e;
+    --fake: #b45309;
+    --fake-bg: #fff7ed;
+    font-size: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 0 3rem;
+    background: var(--bg); color: var(--ink);
+    font: 1rem/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .wrap { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
+  a { color: inherit; }
+
+  .protobar {
+    background: var(--fake-bg); border-bottom: 1px solid #fed7aa;
+    color: var(--fake); font-size: .8rem; padding: .5rem 1rem; text-align: center;
+  }
+
+  h1 { font-size: 1.25rem; margin: 1.25rem 0 .15rem; letter-spacing: -.01em; }
+  .sub { color: var(--dim); font-size: .8rem; margin: 0 0 1.25rem; }
+
+  section { margin: 0 0 1.75rem; }
+  h2 {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--dim); margin: 0 0 .6rem;
+    display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+  }
+  h2 a { color: var(--accent); text-transform: none; letter-spacing: 0; font-size: .8rem; }
+
+  .day {
+    font-weight: 600; font-size: .9rem; margin: 1.25rem 0 .25rem;
+    display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+  }
+  .day .rel { color: var(--dim); font-weight: 400; }
+  .day .dw { font-weight: 400; color: var(--dim); white-space: nowrap; }
+
+  .row {
+    display: flex; gap: .7rem; align-items: baseline;
+    padding: .5rem 0; border-bottom: 1px solid var(--line);
+  }
+  .row .time { color: var(--dim); font-variant-numeric: tabular-nums; font-size: .85rem; min-width: 3.1rem; }
+  .row .body { flex: 1; min-width: 0; }
+  .row .title { font-weight: 500; }
+  .row .meta { color: var(--dim); font-size: .8rem; }
+
+  .fake { border-left: 3px solid #fdba74; padding-left: .55rem; background: var(--fake-bg); }
+  .fakebadge {
+    display: inline-block; background: var(--fake); color: #fff; font-size: .6rem;
+    letter-spacing: .06em; padding: .05rem .3rem; border-radius: 3px; vertical-align: .1em;
+  }
+  .quiet { color: var(--dim); font-size: .85rem; font-style: italic; padding: .5rem 0; }
+
+  .linkrow { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+    padding: .3rem .7rem; font-size: .85rem; text-decoration: none;
+  }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .9rem; }
+  section.card { margin-bottom: 1rem; }
+
+  /* miniature poster on each film row */
+  .frow { align-items: center; }
+  .frow .fposter {
+    flex: 0 0 auto; width: 2.4rem; aspect-ratio: 2 / 3; border-radius: 4px;
+    background: #e8e4dd; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem;
+  }
+  .frow .rank { color: var(--dim); font-size: .85rem; font-weight: 600; min-width: 1.2rem; }
+
+
+  /* --- page header band --- */
+  .pagehead {
+    border-bottom: 1px solid var(--line);
+    padding: 1.5rem 0 1.25rem; margin-bottom: 1.5rem;
+  }
+  .pagehead h1 { margin: 0 0 .15rem; font-size: 1.5rem; }
+  .pagehead .sub { margin: 0; }
+  .pagehead .wx { gap: .5rem; }
+  .pagehead .ph-wx a { text-decoration: none; color: inherit; }
+  .pagehead.side { display: flex; justify-content: space-between; align-items: flex-end; gap: 2rem; flex-wrap: wrap; }
+  .pagehead.side .ph-wx { flex: 1 1 20rem; max-width: 28rem; }
+
+  .wx { display: flex; justify-content: space-between; }
+  .wx div { text-align: center; flex: 1; font-size: .75rem; color: var(--dim); }
+  .wx .ic { font-size: 1.4rem; display: block; line-height: 1.5; }
+  .wx .t { color: var(--ink); font-weight: 500; }
+
+  /* --- grid of event cards (hejauppsala-style) --- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); gap: .9rem; }
+  @media (min-width: 60rem) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 1.1rem; }
+  }
+  .ecard {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .ecard .thumb {
+    aspect-ratio: 3 / 2; background: #e8e4dd;
+    display: flex; align-items: center; justify-content: center; font-size: 1.8rem;
+  }
+  .ecard .ec-body { padding: .6rem .7rem .7rem; }
+  .ecard .ec-when {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--fake); font-weight: 600; margin-bottom: .2rem;
+  }
+  .ecard .ec-title { font-weight: 600; font-size: .9rem; line-height: 1.25; }
+  .ecard .ec-meta { color: var(--dim); font-size: .78rem; margin-top: .2rem; }
+
+  /* --- event layout picker: segmented control --- */
+  .picker {
+    display: inline-flex; border: 1px solid var(--line); border-radius: 8px;
+    overflow: hidden; background: var(--card);
+  }
+  .picker a {
+    display: flex; align-items: center;
+    text-decoration: none; color: var(--dim);
+    padding: .35rem .6rem; border-left: 1px solid var(--line);
+  }
+  .picker a:first-child { border-left: 0; }
+  .picker a:hover { background: var(--bg); color: var(--ink); }
+  .picker a.on { background: var(--ink); color: #fff; }
+  .picker svg { width: 14px; height: 14px; fill: currentColor; display: block; }
+
+  /* --- desktop: events left, cards right --- */
+  .cols { display: block; }
+  @media (min-width: 60rem) {
+    .cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 2.5rem; align-items: start; }
+    .aside { position: sticky; top: 1rem; }
+    .aside section:last-child { margin-bottom: 0; }
+  }
+
+  /* --- horizontal day slices, desktop only --- */
+  /* Below 60rem the columns fall back to the day-grouped list, so the card
+     drops away too — Spalter and Lista are then pixel-identical on mobile. */
+  .slices { display: block; }
+  @media (min-width: 60rem) {
+    .slicecard {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 12px; padding: .9rem;
+    }
+    .slices {
+      display: flex; gap: 1.25rem; overflow-x: auto; padding-bottom: .75rem;
+      scroll-snap-type: x proximity;
+    }
+    .slices .slice {
+      flex: 0 0 15rem; scroll-snap-align: start;
+      border-left: 1px solid var(--line); padding-left: 1rem;
+    }
+    .slices .slice:first-child { border-left: 0; padding-left: 0; }
+    .slices .day { margin-top: 0; }
+    .slices .row { flex-direction: column; gap: .1rem; }
+    .slices .row .time { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="protobar">
+  PROTOTYP — kastas bort. Rader med <span class="fakebadge">FEJK</span> är påhittade exempel, inte riktig data.
+</div>
+
+<div class="wrap" id="app"></div>
+
+<script>
+// ---------------------------------------------------------------------------
+// Throwaway prototype for ticket 07. Fake data, real outgoing links.
+// One layout: header band with the 7-day weather beside the title, events
+// uncarded in the main column, films + gigs as cards (right sidebar on desktop,
+// stacked below on mobile). Weather also repeats on each day header.
+//
+// ?events=grid|slices|days switches the event layout. Unlike the rest of this
+// file that switcher is NOT a prototyping device — it is intended to ship.
+// ---------------------------------------------------------------------------
+
+const LINKS = {
+  smhi:      "https://www.smhi.se/vader/prognoser/ortsprognoser/q/Uppsala/2666199",
+  heja:      "https://hejauppsala.com/kalender",
+  facebook:  "https://www.facebook.com/events/",
+  ticketmaster: "https://www.ticketmaster.se/",
+  songkick:  "https://www.songkick.com/",
+  filmstaden:"https://www.filmstaden.se/",
+  fyris:     "https://www.fyrisbiografen.se/",
+  slotts:    "https://www.slottsbiografen.se/",
+  regina:    "https://www.bioregina.se/",
+};
+
+const DAYS = [
+  { label: "Fredag 15 aug",  short: "Fre 15 aug", rel: "idag",    ic: "☀️", t: "22°", events: [
+      { time: "18:00", title: "Livemusik på Katalin", meta: "Katalin · Konsert" },
+      { time: "19:30", title: "Uppsala Stadsteater: Premiär", meta: "Stadsteatern · Scen" },
+  ]},
+  { label: "Lördag 16 aug",  short: "Lör 16 aug", rel: "imorgon", ic: "🌤", t: "21°", events: [
+      { time: "11:00", title: "Loppis i Stadsträdgården", meta: "Stadsträdgården · Marknad" },
+      { time: "14:00", title: "Guidad tur i Domkyrkan", meta: "Domkyrkan · Kultur" },
+      { time: "20:00", title: "Klubbkväll på Fest", meta: "Fest · Klubb" },
+  ]},
+  { label: "Söndag 17 aug",  short: "Sön 17 aug", rel: "",        ic: "🌧", t: "17°", events: [
+      { time: "13:00", title: "Familjedag på Biotopia", meta: "Biotopia · Familj" },
+  ]},
+  { label: "Måndag 18 aug",  short: "Mån 18 aug", rel: "",        ic: "🌧", t: "16°", events: [] },
+  { label: "Tisdag 19 aug",  short: "Tis 19 aug", rel: "",        ic: "⛅️", t: "18°", events: [
+      { time: "18:30", title: "Föreläsning på Ekonomikum", meta: "Ekonomikum · Föredrag" },
+  ]},
+  { label: "Onsdag 20 aug",  short: "Ons 20 aug", rel: "",        ic: "☀️", t: "20°", events: [
+      { time: "17:00", title: "After work på Flustret", meta: "Flustret · Uteliv" },
+      { time: "19:00", title: "Filmklubb: Stumfilmskväll", meta: "Fyrisbiografen · Film" },
+  ]},
+  { label: "Torsdag 21 aug", short: "Tor 21 aug", rel: "",        ic: "☀️", t: "21°", events: [
+      { time: "19:00", title: "Standup på Kalmar Nation", meta: "Kalmar Nation · Humor" },
+  ]},
+];
+
+const GIGS = [
+  { date: "12 sep", title: "Viagra Boys", meta: "Fållan, Stockholm" },
+  { date: "4 okt",  title: "Kite", meta: "Uppsala Konsert & Kongress" },
+];
+
+const FILMS = [
+  { title: "Filmtitel ett", meta: "14 visningar", ic: "🎬" },
+  { title: "Filmtitel två", meta: "11 visningar", ic: "🎞" },
+  { title: "Filmtitel tre", meta: "9 visningar",  ic: "🍿" },
+  { title: "Filmtitel fyra", meta: "6 visningar", ic: "🎬" },
+  { title: "Filmtitel fem", meta: "4 visningar",  ic: "🎞" },
+];
+
+const CATEGORY_ICONS = {
+  "Konsert": "🎵", "Scen": "🎭", "Marknad": "🛍", "Kultur": "⛪️", "Klubb": "🪩",
+  "Familj": "🧸", "Föredrag": "🎓", "Uteliv": "🍻", "Film": "🎞", "Humor": "🎤",
+};
+
+const FAKE = '<span class="fakebadge">FEJK</span>';
+const esc = (s) => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+// --- events --------------------------------------------------------------
+
+const dayHead = (d) => `
+  <div class="day">
+    <span>${esc(d.label)} ${d.rel ? `<span class="rel">· ${esc(d.rel)}</span>` : ""}</span>
+    <span class="dw"><a href="${LINKS.smhi}" style="text-decoration:none">${d.ic} ${d.t}</a></span>
+  </div>`;
+
+const eventRow = (e) => `
+  <div class="row fake">
+    <div class="time">${esc(e.time)}</div>
+    <div class="body">
+      <div class="title">${esc(e.title)} ${FAKE}</div>
+      <div class="meta">${esc(e.meta)}</div>
+    </div>
+  </div>`;
+
+const dayBlock = (d) => `
+  ${dayHead(d)}
+  ${d.events.length ? d.events.map(eventRow).join("") : `<div class="quiet">Inget inrapporterat</div>`}`;
+
+const EVENT_LAYOUTS = {
+  grid: {
+    name: "Rutnät",
+    render: () => `
+      <div class="grid">
+        ${DAYS.flatMap(d => d.events.map(e => {
+          const category = e.meta.split("·").pop().trim();
+          return `
+            <a class="ecard" href="${LINKS.heja}" style="text-decoration:none">
+              <div class="thumb">${CATEGORY_ICONS[category] || "📅"}</div>
+              <div class="ec-body">
+                <div class="ec-when">${esc(d.short)} ${esc(e.time)} ${FAKE}</div>
+                <div class="ec-title">${esc(e.title)}</div>
+                <div class="ec-meta">${esc(e.meta)}</div>
+              </div>
+            </a>`;
+        })).join("")}
+      </div>`,
+  },
+  slices: {
+    name: "Spalter",
+    // Carded — the columns need an edge to sit inside. The card wraps only the
+    // content, never the heading or the switcher, so those never move.
+    render: () => `
+      <div class="slicecard">
+        <div class="slices">
+          ${DAYS.map(d => `<div class="slice">${dayBlock(d)}</div>`).join("")}
+        </div>
+      </div>`,
+  },
+  days: {
+    name: "Lista",
+    render: () => DAYS.map(dayBlock).join(""),
+  },
+};
+
+const layoutKey = (() => {
+  const k = (new URLSearchParams(location.search).get("events") || "grid").toLowerCase();
+  return EVENT_LAYOUTS[k] ? k : "grid";
+})();
+
+const ICONS = {
+  grid: `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="6" height="6" rx="1"/><rect x="9" y="1" width="6" height="6" rx="1"/><rect x="1" y="9" width="6" height="6" rx="1"/><rect x="9" y="9" width="6" height="6" rx="1"/></svg>`,
+  slices: `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="1" width="3.6" height="14" rx="1"/><rect x="6.2" y="1" width="3.6" height="14" rx="1"/><rect x="11.4" y="1" width="3.6" height="14" rx="1"/></svg>`,
+  days: `<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1" y="2" width="14" height="2.4" rx="1.2"/><rect x="1" y="6.8" width="14" height="2.4" rx="1.2"/><rect x="1" y="11.6" width="14" height="2.4" rx="1.2"/></svg>`,
+};
+
+const picker = () => `
+  <span class="picker" role="group" aria-label="Välj vy">
+    ${Object.entries(EVENT_LAYOUTS)
+      .map(([k, v]) => `
+        <a href="?events=${k}" class="${k === layoutKey ? "on" : ""}"
+           title="${v.name}" aria-label="${v.name}"
+           ${k === layoutKey ? 'aria-current="true"' : ""}>
+          ${ICONS[k]}
+        </a>`)
+      .join("")}
+  </span>`;
+
+const eventsSection = () => `
+  <section>
+    <h2>
+      <span>Vad händer</span>
+      ${picker()}
+    </h2>
+    ${EVENT_LAYOUTS[layoutKey].render()}
+    <p class="sub" style="margin-top:1rem">
+      <a href="${LINKS.heja}">Fler evenemang på hejauppsala</a> ·
+      <a href="${LINKS.facebook}">Bläddra på Facebook Events</a>
+    </p>
+  </section>`;
+
+// --- sidebar cards -------------------------------------------------------
+
+const filmsCard = () => `
+  <section class="card">
+    <h2>På bio <a href="${LINKS.filmstaden}">Filmstaden →</a></h2>
+    ${FILMS.map((f, i) => `
+      <div class="row fake frow">
+        <div class="rank">${i + 1}</div>
+        <div class="fposter">${f.ic}</div>
+        <div class="body">
+          <div class="title">${esc(f.title)} ${FAKE}</div>
+          <div class="meta">${esc(f.meta)} denna vecka</div>
+        </div>
+      </div>`).join("")}
+    <div style="margin-top:.7rem">
+      <div class="linkrow">
+        <a class="chip" href="${LINKS.filmstaden}">Filmstaden</a>
+        <a class="chip" href="${LINKS.fyris}">Fyrisbiografen</a>
+        <a class="chip" href="${LINKS.slotts}">Slottsbiografen</a>
+        <a class="chip" href="${LINKS.regina}">Bio Regina</a>
+      </div>
+    </div>
+  </section>`;
+
+const gigsCard = () => `
+  <section class="card">
+    <h2>Dina band <a href="${LINKS.ticketmaster}">Ticketmaster →</a></h2>
+    ${GIGS.map(g => `
+      <div class="row fake">
+        <div class="time">${esc(g.date)}</div>
+        <div class="body">
+          <div class="title">${esc(g.title)} ${FAKE}</div>
+          <div class="meta">${esc(g.meta)}</div>
+        </div>
+      </div>`).join("")}
+    <p class="sub" style="margin:.8rem 0 0">Hela Sverige · <a href="${LINKS.songkick}">Songkick</a></p>
+  </section>`;
+
+// --- page ----------------------------------------------------------------
+
+const weatherRow = () => `
+  <a href="${LINKS.smhi}">
+    <div class="wx">
+      ${DAYS.map(d => `
+        <div>
+          <span class="ic">${d.ic}</span>
+          <span class="t">${d.t}</span><br>
+          ${esc(d.short.slice(0, 3))}
+        </div>`).join("")}
+    </div>
+  </a>`;
+
+const pageHeader = () => `
+  <header class="pagehead side">
+    <div class="ph-title">
+      <h1>Uppsala</h1>
+      <p class="sub">Fredag 15 augusti · uppdaterad 06:00</p>
+    </div>
+    <div class="ph-wx">${weatherRow()}</div>
+  </header>`;
+
+document.getElementById("app").innerHTML = `
+  ${pageHeader()}
+  <div class="cols">
+    <div class="main">${eventsSection()}</div>
+    <div class="aside">${filmsCard()}${gigsCard()}</div>
+  </div>`;
+</script>
+</body>
+</html>
