@@ -1,7 +1,7 @@
 # 11 — Ongoing events, and whether day slices survive real volume
 
 Type: prototype
-Status: open
+Status: claimed
 Blocked by: 01
 
 ## Question

@@ -1,0 +1,12 @@
+{
+  "name": "whats-happening",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@vercel/node": "^5.1.0",
+    "typescript": "^5.7.0"
+  },
+  "scripts": {
+    "check": "tsc --noEmit"
+  }
+}

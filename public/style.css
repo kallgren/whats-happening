@@ -1,0 +1,196 @@
+/* The design is the ticket 07 prototype (prototype/layout-variants.html), with
+   the fake-data scaffolding stripped out and one thing added: the "Pågår just
+   nu" block that ticket 11 needed. Nothing else here is new. */
+
+:root {
+  --bg: #faf9f7;
+  --card: #fff;
+  --ink: #1a1a1a;
+  --dim: #6b6b6b;
+  --line: #e4e1dc;
+  --accent: #1b4d3e;
+  /* The warm block an event row sits in. In the ticket 07 prototype this was
+     the "this row is fake data" marker; nothing on the page is fake any more,
+     so it is free to do the job it was always doing visually — making each
+     event read as a block in a column rather than a line in a list. */
+  --ev-bg: #fff7ed;
+  --ev-bar: #fdba74;
+  --warn: #8a3f1d;
+  --skel: #e8e4dd;
+  --skel-hi: #f4f1ec;
+  font-size: 16px;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0 0 3rem;
+  background: var(--bg); color: var(--ink);
+  font: 1rem/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+.wrap { max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
+a { color: inherit; }
+
+.sub { color: var(--dim); font-size: .8rem; margin: 0 0 1.25rem; }
+.sub a { color: var(--accent); }
+
+section { margin: 0 0 1.75rem; }
+h2 {
+  font-size: .75rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--dim); margin: 0 0 .6rem;
+  display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+}
+h2 a { color: var(--accent); text-transform: none; letter-spacing: 0; font-size: .8rem; }
+
+.day {
+  font-weight: 600; font-size: .9rem; margin: 1.25rem 0 .25rem;
+  display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
+}
+.day .rel { color: var(--dim); font-weight: 400; }
+/* The right-hand slot in the day header is the day's weather. Ticket 06 fills
+   it; until then the header simply ends after the date. */
+.day .dw { font-weight: 400; color: var(--dim); white-space: nowrap; }
+
+.row {
+  display: flex; gap: .7rem; align-items: baseline;
+  padding: .5rem 0; border-bottom: 1px solid var(--line);
+}
+/* Consecutive rows butt against each other, so a day reads as one warm column
+   with hairlines inside it rather than as separate cards. */
+.slice .row {
+  background: var(--ev-bg); border-left: 3px solid var(--ev-bar);
+  padding: .5rem .6rem .5rem .55rem;
+}
+.slice .row:last-child { border-bottom: 0; }
+/* The listing carries no clock time — only the 605 KB detail page has one, which
+   ticket 01 ruled out. So the temporal column carries the end of a run instead,
+   and stands empty for a single-day event. */
+.row .time { color: var(--dim); font-variant-numeric: tabular-nums; font-size: .85rem; min-width: 3.1rem; }
+.row .body { flex: 1; min-width: 0; }
+.row .title { font-weight: 500; }
+.row .title a { text-decoration: none; }
+.row .title a:hover { color: var(--accent); }
+.row .meta { color: var(--dim); font-size: .8rem; }
+.quiet { color: var(--dim); font-size: .85rem; font-style: italic; padding: .5rem 0; }
+
+.linkrow { display: flex; flex-wrap: wrap; gap: .4rem; }
+/* In the sidebar cards the chips follow the heading directly; in the main
+   column they follow the slice card and need to clear it. */
+.main .linkrow { margin-top: 1rem; }
+.chip {
+  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+  padding: .3rem .7rem; font-size: .85rem; text-decoration: none;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .9rem; }
+section.card { margin-bottom: 1rem; }
+
+/* --- freshness and failure ---------------------------------------------
+   Ticket 08: there is no build to fail and no workflow email, so a broken
+   source has to say so on the page itself, and must never cost the sections
+   that still work. */
+.stamp { color: var(--dim); text-transform: none; letter-spacing: 0; font-size: .7rem; font-weight: 400; }
+.failed {
+  border: 1px solid var(--line); border-left: 3px solid var(--warn);
+  border-radius: 12px; padding: .8rem .9rem; background: var(--card);
+  font-size: .9rem; color: var(--warn);
+}
+.failed .why { color: var(--dim); font-size: .78rem; margin: .3rem 0 0; }
+
+/* --- skeletons ---------------------------------------------------------
+   Placeholders for data a later ticket fills in, aria-hidden: the shape is for
+   the eye only. Only the weather strip still uses these. */
+.sk {
+  display: block; background: var(--skel); border-radius: 4px;
+  height: .7rem; width: 100%;
+  background-image: linear-gradient(90deg, var(--skel) 0%, var(--skel-hi) 50%, var(--skel) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to   { background-position: -50% 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+/* --- page header band --- */
+.pagehead {
+  border-bottom: 1px solid var(--line);
+  padding: 1.5rem 0 1.25rem; margin-bottom: 1.5rem;
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 2rem; flex-wrap: wrap;
+}
+.pagehead h1 { margin: 0 0 .15rem; font-size: 1.5rem; letter-spacing: -.01em; }
+.pagehead .sub { margin: 0; }
+.pagehead .ph-wx { flex: 1 1 20rem; max-width: 28rem; }
+.pagehead .ph-wx a { text-decoration: none; color: inherit; display: block; }
+
+.wx { display: flex; justify-content: space-between; gap: .5rem; }
+.wx div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.wx .ic { width: 1.6rem; height: 1.6rem; border-radius: 50%; }
+.wx .t { width: 1.6rem; height: .6rem; }
+.wx .dn { width: 1.5rem; height: .5rem; }
+
+/* --- desktop: events left, cards right --- */
+.cols { display: block; }
+@media (min-width: 60rem) {
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 2.5rem; align-items: start; }
+  .aside { position: sticky; top: 1rem; }
+  .aside section:last-child { margin-bottom: 0; }
+}
+
+/* --- pågår just nu ---
+   Ticket 11. hejauppsala clamps an already-running event's displayed start date
+   to today, so taken literally every month-long exhibition in the city lands on
+   day 1 — 23 events against a median of 4. Long runs come out here instead.
+
+   Its own card above the slices, so the two questions stay visually separate:
+   "what is running right now" and "what starts on which day". */
+.ongoing {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; padding: .9rem; margin-bottom: .75rem;
+}
+.ongoing h3 {
+  font-size: .7rem; text-transform: uppercase; letter-spacing: .09em;
+  color: var(--dim); margin: 0 0 .6rem; font-weight: 600;
+}
+.ongrid { display: grid; grid-template-columns: 1fr; gap: .4rem; }
+@media (min-width: 40rem) { .ongrid { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); } }
+/* Same warm family as a day row, but boxed rather than barred — related to the
+   slices above, clearly not one of them. */
+.onc {
+  display: flex; flex-direction: column; gap: .1rem;
+  text-decoration: none; background: var(--ev-bg);
+  border: 1px solid var(--ev-bar); border-radius: 10px; padding: .5rem .65rem;
+}
+.onc:hover { border-color: var(--accent); }
+.onc .title { font-weight: 500; font-size: .88rem; line-height: 1.25; }
+.onc .meta { color: var(--dim); font-size: .78rem; }
+
+/* --- horizontal day slices, desktop only --- */
+/* Below 60rem the columns fall back to the day-grouped list, so the card drops
+   away too — the mobile story is a plain list and nothing else. */
+.slices { display: block; }
+@media (min-width: 60rem) {
+  .slicecard {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; padding: .9rem;
+  }
+  .slices {
+    display: flex; gap: 1.25rem; overflow-x: auto; padding-bottom: .75rem;
+    scroll-snap-type: x proximity;
+  }
+  .slices .slice {
+    flex: 0 0 15rem; scroll-snap-align: start;
+    border-left: 1px solid var(--line); padding-left: 1rem;
+    /* Ticket 11: the Saturday spike is 14 events against a median of 4. It
+       scrolls inside its own column rather than stretching the whole row. */
+    max-height: 26rem; overflow-y: auto;
+  }
+  .slices .slice:first-child { border-left: 0; padding-left: 0; }
+  .slices .day {
+    margin-top: 0; position: sticky; top: 0;
+    background: var(--card); padding-bottom: .3rem;
+  }
+  .slices .row { flex-direction: column; align-items: stretch; gap: .1rem; }
+  .slices .row .time { min-width: 0; }
+}
