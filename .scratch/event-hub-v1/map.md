@@ -89,24 +89,47 @@ permanent and never upgrades.
   *Dina band*. Skeletons, not fake rows, where data will land. Deploy is `vercel deploy --prod`;
   Git integration is not connected yet, which [08](./issues/08-build-pipeline.md) must resolve.
 
+- [01 — Recover event start dates from hejauppsala](./issues/01-hejauppsala-event-dates.md) —
+  **parse the rendered `/kalender/` listing**; the REST API, other namespaces and JSON-LD are all
+  dead ends. The listing is already upcoming-only and date-sorted, 40/page, so a 14-day window
+  costs **4 requests, ~2.4 MB, ~2.6 s** — the 5,302-event archive is never pulled. Dedupe by slug
+  (pages overlap). The date badge's theme classes are the one brittle dependency; fail the build
+  loudly when links outnumber parsed dates. Two real gotchas: **day-1 start dates are clamped**, so
+  a running event looks like it starts today; and ~87 events fall in 14 days, median ~4/day with
+  Saturday spikes to 14.
+
+- [06 — SMHI 7-day forecast for Uppsala](./issues/06-smhi-forecast.md) — **`pmp3g` is retired**
+  (2026-03-31, now 404); the product is **`snow1g` version 1**, same host and grammar, no auth.
+  One request, 10.8 KB with `?parameters=air_temperature,symbol_code`. Horizon ~10 days but
+  resolution degrades to 12-hourly, so **display 7**. `symbol_code` keeps `Wsymb2`'s 1–27 semantics.
+  Collapse rule: 06:00–18:00 local, max symbol if any `>= 7` else median. CC BY 4.0 — the credit
+  must state the data was modified. Under an hour of work, so weather stays in v1.
+
+- [02 — Get Uppsala cinema showtimes](./issues/02-filmstaden-showtimes.md) — **Filmstaden is closed
+  to us** (Cloudflare challenge on every path, all API subdomains NXDOMAIN), but it is not needed.
+  Two GETs — **nfbio.se/biograf/uppsala?city=uppsala** (mainstream, 122 screenings, `?city=` is
+  load-bearing) and **fyrisbiografen.se/kalendarium** (art-house, thin on Thursdays) — give exact
+  per-film counts, so **top-5-by-showings survives unchanged**. The counts undercount titles also
+  playing at Filmstaden: rank on them, never print them. Three link-outs, one per operator.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
+
+- **Whether hejauppsala's category taxonomy is worth surfacing at all.** 01 found 17 categories
+  mixing three axes — genre, geography, editorial flags — with `uppsala` on 97% of events and
+  `hojdpunkter-hejauppsala` on 81%. Too lopsided to group by, possibly useful as a filter or a
+  quality signal. Only decidable once events are on the page and the noise level is visible.
 
 - **Dismissal / "not interested".** Wanted eventually; needs client-side state on a static site
   (localStorage) and a stable per-event identity. Deferred until v1 is in real use, since the
   right shape depends on how noisy the feed actually turns out to be.
 - **Whether hejauppsala alone is enough.** Destination Uppsala, Uppsala City, kalender.se and
   uppsala.se all exist and are unexplored. Only worth surveying if v1 proves thin in practice.
-- **How source failures surface, and empty vs broken on the page.** A failed Action emails, but a
-  source that silently returns zero rows does not. Today every section reads as "loading forever",
-  which will be indistinguishable from a quiet week the moment data lands. Left undecided by
-  [07 — Build v0](./issues/07-hub-page-layout.md) (its point 5) and inherited by whichever research
-  ticket first lands real data.
-- **Whether the day-slice view survives contact with real data.** v0 ships horizontal day slices
-  above 60rem, stacking to a day-grouped list below. Whether slices beat the plain list — and how
-  many days fit before it stops scanning — only becomes decidable once event volumes are visible.
-  Revisit after [01 — hejauppsala event dates](./issues/01-hejauppsala-event-dates.md).
+- **Whether the Filmstaden gap is big enough to matter in practice.** v1 ranks films on two of
+  Uppsala's cinemas, missing Luxe's 13 screens and Royal. Only visible once the top 5 is on the page
+  and Robert can tell whether it matches what is actually on in town. See
+  [02](./issues/02-filmstaden-showtimes.md).
 - **Whether the page ever needs a framework.** Deliberately deferred, not settled. v0 has no client
   state. The trigger to revisit is real interaction — dismissal, filters, view toggles — outgrowing
   vanilla JS, most likely during the LLM-ranking effort. Decide then, against real requirements.
@@ -120,6 +143,10 @@ Ruled beyond this destination. Returns only as a fresh effort, not a resumption.
 - **LLM prose-taste relevance ranking.** The agreed design — Robert writes a paragraph describing
   what he likes, an LLM scores each event at ingest, ranking not hiding. **This is the intended
   next effort**, deliberately deferred so real needs emerge from using v1 first.
+- **Filmstaden as a data source.** Cloudflare managed challenge on every path, no reachable API
+  subdomain; only headless-browser challenge-solving gets in, which the static build cannot host and
+  which is the exact maintenance liability this map avoids. v1 links out to
+  `filmstaden.se/uppsala/` instead. See [02](./issues/02-filmstaden-showtimes.md).
 - **Facebook event scraping.** No legitimate API path; Graph API covers only assets you own.
   Scraping is brittle, against ToS, and a permanent maintenance tax. v1 links out instead.
 - **Bandsintown API.** Gated behind a partnership program restricted to artists and their

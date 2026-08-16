@@ -8,6 +8,26 @@ Blocked by: —
 
 What builds the page, and how is it scheduled?
 
+**Sharpened by [06 — SMHI forecast](./06-smhi-forecast.md)**: SMHI retired the `pmp3g` API in March
+2026 and it now 404s — a source broke under this map while the map was being drawn. That moves
+*"how does a broken source surface"* from a nice-to-have to a requirement of this ticket: the build
+must **throw on a non-200 rather than render an empty section**. [01](./01-hejauppsala-event-dates.md)
+adds a second, quieter case — an HTML parse that still returns 200 but yields zero dates.
+
+**This ticket now owns the map's old "empty vs broken" fog patch**, which the three research tickets
+made concrete enough to hand over. Each arrived with its own guard, and this ticket decides how they
+are expressed and how a failure reaches Robert:
+
+- **Weather** — throw on non-200. `snow1g` is version 1 of a product whose predecessor just died.
+- **Events** — fail loudly when a `/kalender/` page yields 40 event links but under ~35 parsed dates;
+  the date badge hangs off theme utility classes with no fallback.
+- **Films** — fail when nfbio yields under 5 screenings in 7 days; treat a thin Fyrisbiografen as
+  normal, since its Fri–Thu horizon empties legitimately on Thursdays.
+
+The shape to decide: does a broken source **fail the whole build** (page keeps yesterday's HTML) or
+**fail its own section** (page ships with one section marked stale)? And how does a genuinely quiet
+week render, now that "loading forever" skeletons stop being the honest answer?
+
 **Note the sequencing.** [07 — Build v0](./07-hub-page-layout.md) shipped a pure-links page that
 needs no build at all — just a static file, now live at **https://whats-happening-events.vercel.app**.
 This ticket is about adding the *data* pipeline underneath that already-deployed page, so it is only
