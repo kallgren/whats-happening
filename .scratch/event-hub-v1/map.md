@@ -27,13 +27,22 @@ ticket independently shippable.
 the page is live at **https://whats-happening-events.vercel.app**. Every remaining ticket upgrades
 one link on that live page into real data, in place.
 
-**The pipeline question is now settled too** — [08 — Build pipeline and stack](./issues/08-build-pipeline.md)
-chose request-time rendering by a Vercel function over a scheduled build, which means there is no
-plumbing left to stand up before data can land. The next move is the one Robert named directly:
-get **real hejauppsala events into the Spalter view** and judge whether the hub is useful enough to
-be worth finishing. That is [11 — Ongoing events, and whether day slices survive real
-volume](./issues/11-ongoing-events-and-day-slices.md), which is unblocked and on the frontier.
-Everything downstream of it is a bet on an answer nobody has yet.
+**The first section is live.** [11 — Ongoing events, and whether day slices survive real
+volume](./issues/11-ongoing-events-and-day-slices.md) put **real hejauppsala events into the
+Spalter view**, and in doing so built the server [08](./issues/08-build-pipeline.md) had only
+specified. Progressive replacement is now literally true: there is a running renderer, and each
+remaining section is a link waiting to be swapped for data in it.
+
+That makes two build tickets specifiable that were fog until now — they had no pipeline to land in.
+Both are pure execution with every decision already made:
+[12 — Weather strip](./issues/12-weather-strip.md) and
+[13 — Top 5 on bio](./issues/13-films-top-five.md). Both are on the frontier, and independent of
+each other. [09 — Data model](./issues/09-data-model.md) is unblocked too, though 11 has already
+answered a good part of it in code.
+
+**The question the map rests on is now Robert's to answer, not a ticket's**: whether the hub is
+useful enough to be worth finishing. One section of real data is on the page; living with it is
+the only way to find out.
 
 **Domain**: personal event aggregation, Uppsala, Sweden. Single user (Robert). Swedish-language sources.
 
@@ -138,14 +147,28 @@ three questions with data, and the third with links.**
   never beat him to it, and GitHub disables cron workflows in a repo quiet for 60 days, so it would
   switch itself off during exactly the calm it was meant to cover.
 
+- [11 — Ongoing events, and whether day slices survive real volume](./issues/11-ongoing-events-and-day-slices.md) —
+  **real hejauppsala events are on the page.** Long runs (**7+ days**) lift into their own
+  *Pågår just nu* card **above** the slices; that takes day 1 from 23 to 15, the same band as a
+  normal Saturday, so it stops being a special case. The cut is insensitive — every long run on
+  day 1 spanned 14+ days, so 3 through 10 lift the identical events. **All 14 slices stay**, each
+  scrolling internally so the Saturday spike (14 vs a median of 4) doesn't stretch the row.
+  **No detail-page fetches ever**: they *are* the only way to see a clamped start, but at 605 KB
+  each they'd cost ~14 MB to correct one card. Design is 07's prototype in its *Spalter* view;
+  the three-view picker is dropped. This also **built the server 08 only specified** — with
+  **zero runtime dependencies**, since parsing splits on the stable permalinks. New fact: the site
+  publishes recurring events as **one post per occurrence** (117 posts, 98 titles), so dedupe by
+  slug and never by title.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
 
-- **Whether hejauppsala's category taxonomy is worth surfacing at all.** 01 found 17 categories
-  mixing three axes — genre, geography, editorial flags — with `uppsala` on 97% of events and
-  `hojdpunkter-hejauppsala` on 81%. Too lopsided to group by, possibly useful as a filter or a
-  quality signal. Only decidable once events are on the page and the noise level is visible.
+- **Whether hejauppsala's category taxonomy is worth surfacing beyond a label.** 01 found 17
+  categories mixing three axes — genre, geography, editorial flags. 11 put two of them to work:
+  `uppsala` is the geography filter (it drops 4 posts in 117) and the genre axis prints as the
+  second half of each row's meta line. What is still open is whether genre earns anything *more* —
+  a filter, a grouping, a quality signal. Now answerable from the live page rather than from data.
 
 - **Dismissal / "not interested".** Wanted eventually; needs client-side state on a static site
   (localStorage) and a stable per-event identity. Deferred until v1 is in real use, since the
@@ -160,9 +183,13 @@ In scope, but not yet sharp enough to ticket:
   state. The trigger to revisit is real interaction — dismissal, filters, view toggles — outgrowing
   vanilla JS, most likely during the LLM-ranking effort. Decide then, against real requirements.
 - **Whether the hub is useful enough to be worth finishing at all.** The one question the whole map
-  now rests on, and it cannot be answered by discussion — only by real hejauppsala events sitting in
-  the Spalter view. [11](./issues/11-ongoing-events-and-day-slices.md) is where it gets answered.
-  Until then, 09 and 10 are bets on an unknown.
+  rests on. [11](./issues/11-ongoing-events-and-day-slices.md) has now put it in front of Robert —
+  real events, in the Spalter view, on the live page — but only use answers it, so it stays here
+  until it does. 12 and 13 are worth building either way; 09 and 10 are the ones that would be
+  wasted if the answer is no.
+- **Whether the second week of the horizon earns its keep.** 11 kept all 14 slices rather than
+  cutting to 7, on the grounds that the far end is where plannable things live. That is a
+  prediction about how Robert reads the page, and the page can now check it.
 
 <!-- Ticketmaster coverage of small Uppsala venues moved to Out of scope with the band section -->
 
