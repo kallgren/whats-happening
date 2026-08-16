@@ -23,8 +23,11 @@ Why: it gives value on day one (gathering the links alone removes most of the fr
 the critical path — no single research ticket can leave Robert with nothing — and it makes every
 ticket independently shippable.
 
-**Start here**: [07 — Build v0: the link hub](./issues/07-hub-page-layout.md), ahead of the
-lower-numbered tickets. Everything else can then proceed in any order, or in parallel.
+**v0 has shipped** — [07 — Build v0: the link hub](./issues/07-hub-page-layout.md) is resolved and
+the page is live at **https://robertkallgren.com/whats-happening/**. Every remaining ticket upgrades
+one link on that live page into real data, in place. They can proceed in any order, or in parallel;
+[08 — Build pipeline and stack](./issues/08-build-pipeline.md) is due as soon as the first of them
+is ready to land data.
 
 **Domain**: personal event aggregation, Uppsala, Sweden. Single user (Robert). Swedish-language sources.
 
@@ -36,8 +39,12 @@ lower-numbered tickets. Everything else can then proceed in any order, or in par
 - **Minimum work, 80/20.** Every decision resolves toward less to build and less to maintain.
 - **"Build it and never touch it again."** The feared cost is *sources breaking*, not state.
   Prefer no runtime, no database, no auth, no expiring tokens.
-- **Static site + scheduled GitHub Action, published to GitHub Pages.** No server. A broken source
-  surfaces as a failed workflow email. Pages URLs are public; nothing here is secret.
+- **Static site + scheduled GitHub Action, published to Vercel.** No server. A broken source
+  surfaces as a failed workflow email. The URL is public; nothing here is secret. *Amended by
+  [07](./issues/07-hub-page-layout.md)*: the host was GitHub Pages until v0 shipped, but a Pages
+  project site is forced onto the account's user-level custom domain (`robertkallgren.com`), which
+  Robert rejected. The *shape* — static file, no runtime, scheduled regeneration — is unchanged;
+  only the host moved.
 - **Vanilla HTML/CSS/JS, no framework, for as long as it holds.** Considered and rejected React for
   now — v0 has no client state whatsoever, so the decision is not yet due, and how far vanilla
   carries this is a deliberate experiment. Repeated rows are templating, not a framework concern:
@@ -74,7 +81,13 @@ permanent and never upgrades.
 
 <!-- one line per closed ticket: gist + link -->
 
-_(none yet — charted 2026-08-15)_
+- [07 — Build v0: the link hub](./issues/07-hub-page-layout.md) — **v0 is live at
+  https://whats-happening-events.vercel.app**. Single hand-written `index.html` at the repo root,
+  served by **Vercel** — GitHub Pages was set up, then dropped because a project site inherits the
+  account's custom domain and Robert does not want this on `robertkallgren.com`. Weather strip in
+  the header, then *Vad händer* (horizontal day slices, stacking to a list under 60rem), *På bio*,
+  *Dina band*. Skeletons, not fake rows, where data will land. Deploy is `vercel deploy --prod`;
+  Git integration is not connected yet, which [08](./issues/08-build-pipeline.md) must resolve.
 
 ## Not yet specified
 
@@ -85,12 +98,15 @@ In scope, but not yet sharp enough to ticket:
   right shape depends on how noisy the feed actually turns out to be.
 - **Whether hejauppsala alone is enough.** Destination Uppsala, Uppsala City, kalender.se and
   uppsala.se all exist and are unexplored. Only worth surveying if v1 proves thin in practice.
-- **How source failures surface.** A failed Action emails, but a source that silently returns
-  zero rows does not. Needs a decision once the real failure modes are known.
-- **Whether the day-grouped list survives contact with real data.** Robert raised horizontal
-  scrolling across days; that only becomes decidable once event volumes are visible, so v0
-  deliberately ships without it. Revisit after
-  [01 — hejauppsala event dates](./issues/01-hejauppsala-event-dates.md).
+- **How source failures surface, and empty vs broken on the page.** A failed Action emails, but a
+  source that silently returns zero rows does not. Today every section reads as "loading forever",
+  which will be indistinguishable from a quiet week the moment data lands. Left undecided by
+  [07 — Build v0](./issues/07-hub-page-layout.md) (its point 5) and inherited by whichever research
+  ticket first lands real data.
+- **Whether the day-slice view survives contact with real data.** v0 ships horizontal day slices
+  above 60rem, stacking to a day-grouped list below. Whether slices beat the plain list — and how
+  many days fit before it stops scanning — only becomes decidable once event volumes are visible.
+  Revisit after [01 — hejauppsala event dates](./issues/01-hejauppsala-event-dates.md).
 - **Whether the page ever needs a framework.** Deliberately deferred, not settled. v0 has no client
   state. The trigger to revisit is real interaction — dismissal, filters, view toggles — outgrowing
   vanilla JS, most likely during the LLM-ranking effort. Decide then, against real requirements.

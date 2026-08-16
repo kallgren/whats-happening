@@ -1,7 +1,7 @@
 # 07 — Build v0: the link hub
 
 Type: prototype
-Status: claimed
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -93,3 +93,45 @@ deliberately removed. The first ticket to land real data must make a quiet week 
 from a failed source.
 
 Still open before this ticket resolves: **deploy to a URL reachable from Robert's phone**.
+
+## Answer
+
+**v0 is live at https://whats-happening-events.vercel.app** — the page described in the comment
+above, on a real URL, reachable from a phone. This ticket is resolved.
+
+**Hosting is Vercel, not GitHub Pages** — a deliberate change to the map's standing preference,
+made while resolving this ticket. Pages *was* set up first and worked, but a GitHub project site
+inherits the account's user-level custom domain: it served at `robertkallgren.com/whats-happening/`,
+and Robert does not want this hanging off his personal domain. There is no way to opt a project site
+out of that domain while keeping Pages. The Pages site has been **deleted**; that URL now 404s.
+
+How it is deployed, and the facts later tickets depend on:
+
+- **Vercel project `whats-happening`** under scope `kallgrens-projects`. No framework, no build
+  step — `index.html` at the repo root is served as-is.
+- **The production URL is `whats-happening-events.vercel.app`**, added as a *project domain* so it
+  follows the latest production deployment. This matters: the project's auto-generated
+  `whats-happening-ashy.vercel.app` also still resolves, and deployment-specific URLs
+  (`whats-happening-<hash>-kallgrens-projects.vercel.app`) sit behind **Vercel Authentication** and
+  serve a login wall, not the page. Only the two project domains are public. Never hand out or
+  hardcode a deployment-specific URL.
+- **Site root is `/`**, unlike the Pages subpath, so root-absolute asset paths are safe here.
+- **`.vercelignore`** keeps `.scratch`, `docs`, `prototype` and `CLAUDE.md` out of the upload.
+  `vercel link` added `.vercel` and `.env*.local` to a new `.gitignore`.
+- **Deploy is `vercel deploy --prod --yes`** from the repo root. **Git integration is not
+  connected** — `vercel git connect` fails, most likely because the Vercel GitHub App is not
+  installed on this repo. Connecting it (a dashboard step, Robert only) would make every push to
+  `main` deploy automatically.
+- **The repo is public** and `.scratch/` — this map and its tickets — is public with it. Consistent
+  with the standing preference that nothing here is secret, but worth knowing before an API key
+  lands anywhere near the tree. Keys go in CI secrets, never in the repo.
+
+**Consequence for [08 — Build pipeline and stack](./08-build-pipeline.md)**, which assumed Pages:
+a scheduled Action can no longer publish by committing to `main` and letting the host notice. Two
+options, deliberately left to 08: **connect Vercel's Git integration**, so the Action commits the
+regenerated `index.html` and the push deploys with no credentials anywhere; or have the Action run
+`vercel deploy --prod` directly with a `VERCEL_TOKEN` secret. The first keeps the "no expiring
+tokens" preference intact and is the reason to fix the Git connection.
+
+Point 5 of this ticket — **empty vs broken** — remains undecided and is inherited by whichever
+research ticket first lands real data. Recorded in the map's *Not yet specified*.
