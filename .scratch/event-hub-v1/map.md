@@ -33,12 +33,16 @@ Spalter view**, and in doing so built the server [08](./issues/08-build-pipeline
 specified. Progressive replacement is now literally true: there is a running renderer, and each
 remaining section is a link waiting to be swapped for data in it.
 
-That makes two build tickets specifiable that were fog until now — they had no pipeline to land in.
-Both are pure execution with every decision already made:
-[12 — Weather strip](./issues/12-weather-strip.md) and
-[13 — Top 5 on bio](./issues/13-films-top-five.md). Both are on the frontier, and independent of
-each other. [09 — Data model](./issues/09-data-model.md) is unblocked too, though 11 has already
+That made two build tickets specifiable that were fog until then — they had no pipeline to land in.
+Both are pure execution with every decision already made. **The first of them has landed**:
+[12 — Weather strip](./issues/12-weather-strip.md) is resolved, so the header carries a real
+forecast and the page has no skeletons left anywhere.
+[13 — Top 5 on bio](./issues/13-films-top-five.md) is the remaining one, on the frontier.
+[09 — Data model](./issues/09-data-model.md) is unblocked too, though 11 has already
 answered a good part of it in code.
+
+**Two of the three sections now hold real data.** After 13, every section that will ever hold data
+does — and the only tickets left are the two that write it down (09, 10).
 
 **The question the map rests on is now Robert's to answer, not a ticket's**: whether the hub is
 useful enough to be worth finishing. One section of real data is on the page; living with it is
@@ -160,6 +164,20 @@ three questions with data, and the third with links.**
   publishes recurring events as **one post per occurrence** (117 posts, 98 titles), so dedupe by
   slug and never by title.
 
+- [12 — Upgrade the weather strip to real SMHI data](./issues/12-weather-strip.md) — **the second
+  section is live, and the last skeleton is gone from the page.** 06's research held up in every
+  particular against a fresh live response. Four judgement calls settled while building: **emoji
+  survive** (zero assets, zero bytes; the intensity and cloud-ramp precision they drop is recovered
+  in `aria-label` and a `title="Halvklart, 16–22°"` on every cell); the **CC BY credit goes in a new
+  page footer**, worded to say the data was *modified*, which the licence requires and the daily
+  collapse makes true; **no per-section freshness stamp** — one render per request means both
+  fetches share the header's existing `uppdaterad HH:MM`, and a second clock would imply a
+  difference that does not exist; **slices past day 7 render an empty weather slot**, because a
+  forecast that visibly stops is legible where a row of dashes reads as broken. A dead SMHI prints
+  one quiet line in place of seven cells, link out intact, header uncollapsed. Amends 08's cache
+  rule to three tiers — events failed 60 s, weather-only 300 s, healthy an hour — since retrying
+  every minute to fix a strip of icons would re-scrape hejauppsala sixty times an hour.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -190,6 +208,9 @@ In scope, but not yet sharp enough to ticket:
 - **Whether the second week of the horizon earns its keep.** 11 kept all 14 slices rather than
   cutting to 7, on the grounds that the far end is where plannable things live. That is a
   prediction about how Robert reads the page, and the page can now check it.
+  [12](./issues/12-weather-strip.md) sharpened the question without answering it: the forecast
+  reaches 7 days, so the back half of the fortnight is now visibly thinner than the front — same
+  events, no weather. If the second week is worth keeping, it has to be worth keeping like that.
 
 <!-- Ticketmaster coverage of small Uppsala venues moved to Out of scope with the band section -->
 

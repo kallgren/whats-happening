@@ -28,6 +28,10 @@ export function weekdayLong(isoDate: string): string {
   const s = fmt({ weekday: "long" }).format(at(isoDate));
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
+/** "mån" — for the weather strip, where seven day names sit in a narrow row. */
+export const weekdayShort = (isoDate: string) =>
+  fmt({ weekday: "short" }).format(at(isoDate)).replace(/\.$/, "");
+
 // sv-SE abbreviates with a trailing period ("27 aug."), which reads badly after
 // "t.o.m." — two full stops in a row. Drop it.
 export const dayMonth = (isoDate: string) =>

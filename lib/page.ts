@@ -9,7 +9,9 @@
 
 import type { Event } from "./hejauppsala.js";
 import type { EventsView } from "./events-view.js";
-import { clockInUppsala, dayMonth, longDate, weekdayLong } from "./dates.js";
+import type { DayForecast, Forecast } from "./smhi.js";
+import { weatherEmoji, weatherLabel } from "./smhi.js";
+import { clockInUppsala, dayMonth, longDate, weekdayLong, weekdayShort } from "./dates.js";
 
 export const esc = (s: unknown): string =>
   String(s ?? "")
@@ -20,6 +22,8 @@ export const esc = (s: unknown): string =>
 
 const LINKS = {
   smhi: "https://www.smhi.se/vader/prognoser/ortsprognoser/q/Uppsala/2666199",
+  smhiHome: "https://www.smhi.se/",
+  ccby: "https://creativecommons.org/licenses/by/4.0/deed.sv",
   heja: "https://hejauppsala.com/kalender",
   facebook: "https://www.facebook.com/events/",
   ticketmaster: "https://www.ticketmaster.se/",
@@ -58,18 +62,66 @@ const eventRow = (e: Event) => `
           </div>
         </div>`;
 
+// --- weather ------------------------------------------------------------
+// Ticket 12. Emoji carry no intensity and no colour cue for a screen reader, so
+// every glyph gets its Swedish label as an aria-label and the full reading —
+// label plus the day's range — as a tooltip on the cell around it.
+
+const glyph = (d: DayForecast) =>
+  `<span role="img" aria-label="${esc(weatherLabel(d.symbolCode))}">${weatherEmoji(d.symbolCode)}</span>`;
+
+/** "Halvklart, 12–21°" — the precision the icon and the single number drop. */
+const reading = (d: DayForecast) => `${weatherLabel(d.symbolCode)}, ${d.tmin}–${d.tmax}°`;
+
+/** One cell: icon, the day's high, and the day's name. */
+const wxCell = (d: DayForecast, offset: number) => `
+          <div title="${esc(reading(d))}">
+            <span class="ic">${glyph(d)}</span>
+            <span class="t">${esc(d.tmax)}°</span>
+            <span class="dn">${esc(offset === 0 ? "idag" : weekdayShort(d.date))}</span>
+          </div>`;
+
+/**
+ * The strip lives in the page header, so it has to fail without collapsing the
+ * header around it — one line in place of seven cells, the link to SMHI intact
+ * so the answer is still one tap away.
+ */
+function weatherStrip(forecast: Forecast): string {
+  const body = forecast.error
+    ? `
+        <div class="wxfail">Väder kunde inte hämtas — <span class="why">${esc(forecast.error)}</span></div>`
+    : `
+        <div class="wx">${forecast.days.map((d, i) => wxCell(d, i)).join("")}
+        </div>`;
+
+  return `
+    <div class="ph-wx">
+      <a href="${LINKS.smhi}" target="_blank" rel="noopener">${body}
+      </a>
+    </div>`;
+}
+
+/**
+ * The right-hand slot in a day header. The strip reaches 7 days and the slices
+ * reach 14, so the back half of the fortnight simply has none — and shows
+ * nothing rather than a placeholder. A forecast that stops is legible; a row of
+ * dashes reads as broken.
+ */
+const dayWeather = (d: DayForecast | undefined) =>
+  d ? `<span class="dw" title="${esc(reading(d))}">${glyph(d)} ${esc(d.tmax)}°</span>` : `<span class="dw"></span>`;
+
 /** "Söndag 16 aug · idag" — the relative label only for the two days it helps. */
-function dayHead(date: string, offset: number): string {
+function dayHead(date: string, offset: number, wx: DayForecast | undefined): string {
   const rel = offset === 0 ? "idag" : offset === 1 ? "imorgon" : "";
   return `
         <div class="day">
           <span>${esc(weekdayLong(date))} ${esc(dayMonth(date))}${rel ? ` <span class="rel">· ${rel}</span>` : ""}</span>
-          <span class="dw"></span>
+          ${dayWeather(wx)}
         </div>`;
 }
 
-const daySlice = (date: string, events: Event[], offset: number) => `
-      <div class="slice">${dayHead(date, offset)}
+const daySlice = (date: string, events: Event[], offset: number, wx: DayForecast | undefined) => `
+      <div class="slice">${dayHead(date, offset, wx)}
         ${events.length ? events.map(eventRow).join("") : '<div class="quiet">Inget inrapporterat</div>'}
       </div>`;
 
@@ -79,7 +131,7 @@ const ongoingCard = (e: Event) => `
             <span class="meta">${e.venue ? esc(e.venue) + " · " : ""}t.o.m. ${esc(dayMonth(e.end!))}</span>
           </a>`;
 
-function eventsBody(view: EventsView, error: string | null): string {
+function eventsBody(view: EventsView, error: string | null, wxByDate: Map<string, DayForecast>): string {
   if (error) {
     return `
       <div class="failed">
@@ -102,7 +154,7 @@ function eventsBody(view: EventsView, error: string | null): string {
         </div>
       </div>` : ""}
       <div class="slicecard">
-        <div class="slices">${view.days.map((d, i) => daySlice(d.date, d.events, i)).join("")}
+        <div class="slices">${view.days.map((d, i) => daySlice(d.date, d.events, i, wxByDate.get(d.date))).join("")}
         </div>
       </div>`;
 }
@@ -110,10 +162,12 @@ function eventsBody(view: EventsView, error: string | null): string {
 export function renderPage(opts: {
   today: string;
   view: EventsView;
+  forecast: Forecast;
   fetchedAt: Date;
   error: string | null;
 }): string {
-  const { today, view, fetchedAt, error } = opts;
+  const { today, view, forecast, fetchedAt, error } = opts;
+  const wxByDate = new Map(forecast.days.map((d) => [d.date, d]));
 
   return `<!doctype html>
 <html lang="sv">
@@ -148,13 +202,7 @@ export function renderPage(opts: {
       <h1>Uppsala</h1>
       <p class="sub">${esc(longDate(today))} · uppdaterad ${esc(clockInUppsala(fetchedAt))}</p>
     </div>
-    <div class="ph-wx">
-      <a href="${LINKS.smhi}" target="_blank" rel="noopener">
-        <div class="wx" aria-hidden="true">
-${Array.from({ length: 7 }, () => '          <div><span class="sk ic"></span><span class="sk t"></span><span class="sk dn"></span></div>').join("\n")}
-        </div>
-      </a>
-    </div>
+${weatherStrip(forecast)}
   </header>
 
   <div class="cols">
@@ -162,7 +210,7 @@ ${Array.from({ length: 7 }, () => '          <div><span class="sk ic"></span><sp
 
       <section>
         <h2><span>Vad händer</span></h2>
-${eventsBody(view, error)}
+${eventsBody(view, error, wxByDate)}
         <div class="linkrow">
           <a class="chip" href="${LINKS.heja}" target="_blank" rel="noopener">hejauppsala kalender</a>
           <a class="chip" href="${LINKS.facebook}" target="_blank" rel="noopener">Facebook Events</a>
@@ -193,6 +241,12 @@ ${eventsBody(view, error)}
 
     </div>
   </div>
+
+  <footer class="pagefoot">
+    Väderdata från <a href="${LINKS.smhiHome}" target="_blank" rel="noopener">SMHI</a>
+    (<a href="${LINKS.ccby}" target="_blank" rel="noopener">CC BY 4.0</a>), bearbetad till dygnsvärden.
+    Evenemang från <a href="${LINKS.heja}" target="_blank" rel="noopener">hejauppsala</a>.
+  </footer>
 
 </div>
 </body>

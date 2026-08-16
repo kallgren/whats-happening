@@ -16,8 +16,6 @@
   --ev-bg: #fff7ed;
   --ev-bar: #fdba74;
   --warn: #8a3f1d;
-  --skel: #e8e4dd;
-  --skel-hi: #f4f1ec;
   font-size: 16px;
 }
 * { box-sizing: border-box; }
@@ -45,9 +43,9 @@ h2 a { color: var(--accent); text-transform: none; letter-spacing: 0; font-size:
   display: flex; justify-content: space-between; align-items: baseline; gap: .5rem;
 }
 .day .rel { color: var(--dim); font-weight: 400; }
-/* The right-hand slot in the day header is the day's weather. Ticket 06 fills
-   it; until then the header simply ends after the date. */
-.day .dw { font-weight: 400; color: var(--dim); white-space: nowrap; }
+/* The right-hand slot in the day header is the day's weather, filled by ticket
+   12. It stands empty past day 7, where the forecast runs out. */
+.day .dw { font-weight: 400; color: var(--dim); white-space: nowrap; font-size: .85rem; }
 
 .row {
   display: flex; gap: .7rem; align-items: baseline;
@@ -97,21 +95,19 @@ section.card { margin-bottom: 1rem; }
 }
 .failed .why { color: var(--dim); font-size: .78rem; margin: .3rem 0 0; }
 
-/* --- skeletons ---------------------------------------------------------
-   Placeholders for data a later ticket fills in, aria-hidden: the shape is for
-   the eye only. Only the weather strip still uses these. */
-.sk {
-  display: block; background: var(--skel); border-radius: 4px;
-  height: .7rem; width: 100%;
-  background-image: linear-gradient(90deg, var(--skel) 0%, var(--skel-hi) 50%, var(--skel) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
+/* The skeletons that used to stand in for data lived here. Ticket 12 filled the
+   last of them — the weather strip — so there is nothing left to shimmer. */
+
+/* --- page footer --- */
+/* SMHI's data is CC BY 4.0 and our daily collapse is a modification, so the
+   credit has to name the source *and* say it was processed. That is a licence
+   obligation; the hejauppsala line beside it is just good manners. */
+.pagefoot {
+  border-top: 1px solid var(--line);
+  margin-top: 2.5rem; padding-top: 1rem;
+  color: var(--dim); font-size: .75rem;
 }
-@keyframes shimmer {
-  from { background-position: 150% 0; }
-  to   { background-position: -50% 0; }
-}
-@media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+.pagefoot a { color: var(--accent); }
 
 /* --- page header band --- */
 .pagehead {
@@ -126,10 +122,18 @@ section.card { margin-bottom: 1rem; }
 .pagehead .ph-wx a { text-decoration: none; color: inherit; display: block; }
 
 .wx { display: flex; justify-content: space-between; gap: .5rem; }
-.wx div { flex: 1; display: flex; flex-direction: column; align-items: center; gap: .3rem; }
-.wx .ic { width: 1.6rem; height: 1.6rem; border-radius: 50%; }
-.wx .t { width: 1.6rem; height: .6rem; }
-.wx .dn { width: 1.5rem; height: .5rem; }
+.wx > div {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: .1rem;
+}
+.wx .ic { font-size: 1.35rem; line-height: 1.2; }
+.wx .t { font-size: .85rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.wx .dn { font-size: .7rem; color: var(--dim); }
+
+/* The strip is in the page header, so a dead SMHI has to fail small: one quiet
+   line where seven cells were, with the link out still intact. */
+.wxfail { font-size: .8rem; color: var(--warn); }
+.wxfail .why { color: var(--dim); }
 
 /* --- desktop: events left, cards right --- */
 .cols { display: block; }
