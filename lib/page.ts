@@ -57,13 +57,29 @@ function meta(e: Event): string {
   return [e.venue, genre(e)].filter(Boolean).map(esc).join(" · ");
 }
 
+/**
+ * Ticket 14. The image is decorative: the title it belongs to is always the
+ * next thing in the row, so `alt=""` keeps a screen reader from reading every
+ * event twice. Hotlinked straight at hejauppsala's own resized derivative — no
+ * proxy, no storage. `lazy` because the fourteen slices put ~87 of these in the
+ * document and all but the first column are off-screen; the browser still
+ * fetches whatever is in the initial viewport eagerly, so nothing above the
+ * fold pays for it.
+ */
+const thumb = (e: Event) =>
+  e.image
+    ? `<img class="thumb" src="${esc(e.image)}" alt="" loading="lazy" decoding="async">`
+    : `<span class="thumb"></span>`;
+
 const eventRow = (e: Event) => `
         <div class="row">${e.end && e.end !== e.start
           ? `\n          <div class="time">t.o.m. ${esc(dayMonth(e.end))}</div>`
           : ""}
-          <div class="body">
-            <div class="title"><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a></div>
-            <div class="meta">${meta(e)}</div>
+          <div class="main">${thumb(e)}
+            <div class="body">
+              <div class="title"><a href="${esc(e.url)}" target="_blank" rel="noopener">${esc(e.title)}</a></div>
+              <div class="meta">${meta(e)}</div>
+            </div>
           </div>
         </div>`;
 
@@ -130,10 +146,15 @@ const daySlice = (date: string, events: Event[], offset: number, wx: DayForecast
         ${events.length ? events.map(eventRow).join("") : '<div class="quiet">Inget inrapporterat</div>'}
       </div>`;
 
+// The ongoing card gets a bigger picture than a slice row does: this card is
+// full-width and holds a handful of events, where a slice is a 15rem column
+// holding up to fourteen.
 const ongoingCard = (e: Event) => `
-          <a class="onc" href="${esc(e.url)}" target="_blank" rel="noopener">
-            <span class="title">${esc(e.title)}</span>
-            <span class="meta">${e.venue ? esc(e.venue) + " · " : ""}t.o.m. ${esc(dayMonth(e.end!))}</span>
+          <a class="onc" href="${esc(e.url)}" target="_blank" rel="noopener">${thumb(e)}
+            <span class="body">
+              <span class="title">${esc(e.title)}</span>
+              <span class="meta">${e.venue ? esc(e.venue) + " · " : ""}t.o.m. ${esc(dayMonth(e.end!))}</span>
+            </span>
           </a>`;
 
 function eventsBody(view: EventsView, error: string | null, wxByDate: Map<string, DayForecast>): string {

@@ -21,6 +21,13 @@ export type Event = {
   cats: string[];
   venue: string | null;
   url: string;
+  /**
+   * Ticket 14. The theme lazy-loads client-side, so the card's image sits in a
+   * `data-xl-src` attribute rather than an `src`; we render server-side and emit
+   * a normal `src` from it. Coverage was 40/40 on two separate live checks, but
+   * this stays nullable — a missing image must cost a picture, never a card.
+   */
+  image: string | null;
 };
 
 const MONTHS: Record<string, number> = {
@@ -104,6 +111,12 @@ export function parseListing(html: string, today: Date): Event[] {
     let c: RegExpExecArray | null;
     while ((c = catRe.exec(chunk))) if (!cats.includes(c[1])) cats.push(c[1]);
 
+    // The image. Restricted to the uploads path on purpose: `data-xl-src` also
+    // appears on site chrome (9 of the 49 on page 1), and the chunk boundaries
+    // are permalink-to-permalink rather than element-to-element, so a chrome
+    // block sitting between two cards would otherwise be adopted by one of them.
+    const img = /data-xl-src="(https:\/\/hejauppsala\.com\/wp-content\/uploads\/[^"]+)"/i.exec(chunk);
+
     // The venue is the last breadcrumb item; the earlier ones are categories.
     const crumbs: string[] = [];
     const liRe = /<li[^>]*breadcrumbs__item[^>]*>([\s\S]*?)<\/li>/gi;
@@ -118,6 +131,7 @@ export function parseListing(html: string, today: Date): Event[] {
       cats,
       venue: crumbs.length > 1 ? crumbs[crumbs.length - 1] : null,
       url: `https://hejauppsala.com/kalender/${card.slug}/`,
+      image: img ? decode(img[1]) : null,
     });
   }
 

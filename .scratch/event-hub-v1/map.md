@@ -50,11 +50,16 @@ It also part-answers the question the whole map rests on: he is browsing the pag
 Feasibility turned out to be near-free, so this is an amendment to v1's surface, not a new
 destination — see [research/14-images.md](./research/14-images.md). Event images and mainstream film
 posters are **already in HTML the renderer fetches**, at zero extra requests; only art-house posters
-cost one new GET. Two build tickets, both takeable now and independent of each other:
+cost one new GET. Two build tickets, independent of each other:
 [14 — Event thumbnails](./issues/14-event-thumbnails.md) and
 [15 — Film posters](./issues/15-film-posters.md). Both **block**
 [09 — Data model](./issues/09-data-model.md), so the model is written once, with images in it,
 rather than twice.
+
+**14 has landed** — every event row on the page carries a picture, 120/120 events parsed one, and it
+cost no extra requests exactly as the research promised. [15](./issues/15-film-posters.md) is now the
+**only ticket on the frontier**, and the last thing standing between here and
+[09](./issues/09-data-model.md).
 
 Note 15 **reopens a resolved decision** — 13 dropped the poster placeholder because no posters were
 in scope. That premise was simply wrong, so reopening it is legitimate rather than churn.
@@ -214,12 +219,29 @@ three questions with data, and the third with links.**
   tiers so *any* degraded section, not just weather, holds for 300 s. Also drops the v0 chips for
   Slottsbiografen and Bio Regina — a rental hall and a theatre, neither showing films on a schedule.
 
+- [14 — Event thumbnails](./issues/14-event-thumbnails.md) — **every event row now carries a
+  picture, at zero extra requests.** The research held exactly: 40/40 cards on a fresh fetch,
+  **120/120 events** across the three-page window, 87 images in the document, no fallbacks rendered.
+  Parsing is anchored to `/wp-content/uploads/` rather than to `data-xl-src` alone — the card chunks
+  are permalink-to-permalink, so an unanchored match would let one of page 1's 9 chrome images be
+  adopted as a card's photo. **A fixed 3:2 box, cropped**, because the sources run 1.29:1 to 1.78:1
+  and 3:2 is the middle of that spread; **three sizes** — 3.25rem in a slice (the 15rem column with
+  fourteen Saturday rows is the binding constraint), 4rem in the mobile list, 5.25rem in
+  *Pågår just nu*, whose long runs are exhibitions whose picture largely *is* the description.
+  `loading="lazy"` uniformly: the fear that it would fight the internally-scrolling columns was
+  backwards — `lazy` intersects the **viewport**, so the columns scrolled off-screen are precisely
+  the ones it should defer, and nothing above the fold pays. **`alt=""`, decorative** — the title is
+  the next thing in the row and is the link, so any honest alt is a verbatim repeat read 87 times.
+  Fixed dimensions plus a grey fill are the failure story: a dead hotlink costs one picture and
+  reflows nothing. **Stock-photo detection rejected** — filename heuristics against a source that
+  reuploads freely would rot silently, and a generic photo still anchors the eye better than a hole.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
 
 - **Whether the page should become image-first browsing, rather than text rows with pictures on
-  them.** [14](./issues/14-event-thumbnails.md) ships a thumbnail in the row because it disturbs
+  them.** [14](./issues/14-event-thumbnails.md) shipped a thumbnail in the row because it disturbs
   nothing [11](./issues/11-ongoing-events-and-day-slices.md) settled — the 14 slices survive, the
   Saturday column stays scannable. But Robert's actual words were *"I'm really looking at the
   images"*, and a thumbnail serves **recognition**, not browsing. If images are how he genuinely
@@ -227,7 +249,10 @@ In scope, but not yet sharp enough to ticket:
   larger ticket than adding thumbnails. Deliberately deferred — *"we can adjust the image placement
   later"* — because the cheap version has to be on the page before the expensive question can be
   judged. This is the same bet [11](./issues/11-ongoing-events-and-day-slices.md) made about day
-  slices, and it paid.
+  slices, and it paid. **The cheap version is now live**, so this stops being an argument and becomes
+  a thing to look at. 14 also fixed the *size* of the gap: the slice thumbnail is 3.25rem and cannot
+  grow much, because the 15rem column and a fourteen-event Saturday are what cap it. So the question
+  is not "bigger thumbnails" — it is whether the **column** is the right container at all.
 
 - **Whether hejauppsala's category taxonomy is worth surfacing beyond a label.** 01 found 17
   categories mixing three axes — genre, geography, editorial flags. 11 put two of them to work:

@@ -1,6 +1,8 @@
 /* The design is the ticket 07 prototype (prototype/layout-variants.html), with
    the fake-data scaffolding stripped out and one thing added: the "Pågår just
-   nu" block that ticket 11 needed. Nothing else here is new. */
+   nu" block that ticket 11 needed — and now the thumbnails of ticket 14, which
+   are the first thing on this page to come from Robert using it rather than
+   from the prototype. */
 
 :root {
   --bg: #faf9f7;
@@ -48,9 +50,13 @@ h2 a { color: var(--accent); text-transform: none; letter-spacing: 0; font-size:
 .day .dw { font-weight: 400; color: var(--dim); white-space: nowrap; font-size: .85rem; }
 
 .row {
-  display: flex; gap: .7rem; align-items: baseline;
+  display: flex; gap: .7rem; align-items: flex-start;
   padding: .5rem 0; border-bottom: 1px solid var(--line);
 }
+/* Ticket 14 split the row in two: the temporal column, and everything the eye
+   actually lands on. .main keeps picture and text side by side even in the
+   desktop slices, where .row itself turns into a column. */
+.row .main { display: flex; gap: .6rem; align-items: flex-start; flex: 1; min-width: 0; }
 /* Consecutive rows butt against each other, so a day reads as one warm column
    with hairlines inside it rather than as separate cards. */
 .slice .row {
@@ -61,12 +67,33 @@ h2 a { color: var(--accent); text-transform: none; letter-spacing: 0; font-size:
 /* The listing carries no clock time — only the 605 KB detail page has one, which
    ticket 01 ruled out. So the temporal column carries the end of a run instead,
    and stands empty for a single-day event. */
-.row .time { color: var(--dim); font-variant-numeric: tabular-nums; font-size: .85rem; min-width: 3.1rem; }
+.row .time { color: var(--dim); font-variant-numeric: tabular-nums; font-size: .85rem; min-width: 3.1rem; padding-top: .12rem; }
 .row .body { flex: 1; min-width: 0; }
 .row .title { font-weight: 500; }
 .row .title a { text-decoration: none; }
 .row .title a:hover { color: var(--accent); }
 .row .meta { color: var(--dim); font-size: .8rem; }
+
+/* --- thumbnails ---
+   Ticket 14, and the first thing on this page to come from Robert using it
+   rather than from us guessing: "when I'm browsing, I'm really looking at the
+   images."
+
+   Every source image is a different shape — 1.65:1, 1.49:1, 1.29:1, 1.78:1 and
+   1:1 all appear in the first eight cards — so the box is fixed and the picture
+   is cropped into it. 3:2 sits in the middle of that spread, so it crops the
+   least on average, and a landscape crop is what event photography mostly is.
+
+   The grey fill is load-bearing: it is what an image that 404s degrades to, and
+   an empty box of the right size reads as "no picture" while a collapsed one
+   reads as a broken layout. Same reason width and height are fixed rather than
+   intrinsic — nothing reflows when a hotlink fails. */
+.thumb {
+  flex: 0 0 auto; display: block;
+  width: 4rem; aspect-ratio: 3 / 2;
+  object-fit: cover; border-radius: 6px;
+  background: var(--line);
+}
 .quiet { color: var(--dim); font-size: .85rem; font-style: italic; padding: .5rem 0; }
 
 .linkrow { display: flex; flex-wrap: wrap; gap: .4rem; }
@@ -163,13 +190,18 @@ section.card { margin-bottom: 1rem; }
 /* Plain boxes rather than the warm bars of a day row: these are not one of the
    slices, and the warm fill read as an alert rather than as a card. */
 .onc {
-  display: flex; flex-direction: column; gap: .1rem;
+  display: flex; gap: .6rem; align-items: flex-start;
   text-decoration: none; background: var(--card);
   border: 1px solid var(--line); border-radius: 10px; padding: .5rem .65rem;
 }
 .onc:hover { border-color: var(--accent); }
+.onc .body { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
 .onc .title { font-weight: 500; font-size: .88rem; line-height: 1.25; }
 .onc .meta { color: var(--dim); font-size: .78rem; }
+/* Ticket 14: bigger here than in a slice. This card is full-width and holds a
+   handful of long runs — exhibitions and installations, the events whose
+   picture is most of what tells you what they are. */
+.onc .thumb { width: 5.25rem; }
 
 /* --- på bio ---
    Ticket 13. The prototype's film row had a rank, a poster placeholder and a
@@ -246,5 +278,10 @@ h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; }
     background: var(--card); padding-bottom: .3rem;
   }
   .slices .row { flex-direction: column; align-items: stretch; gap: .1rem; }
-  .slices .row .time { min-width: 0; }
+  .slices .row .time { min-width: 0; padding-top: 0; }
+  /* Smallest here, and deliberately so: the column is 15rem wide and a Saturday
+     puts fourteen rows in it. A picture wide enough to browse by would push the
+     title into two lines and undo ticket 11's readable column. This is
+     recognition, not browsing — see the map's "Not yet specified". */
+  .slices .thumb { width: 3.25rem; }
 }
