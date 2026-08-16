@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#faf9f7"/>
+
+  <g transform="translate(256 256) scale(0.93) translate(-256 -256)">
+    <!-- smiley, tipped a little to the left -->
+    <g transform="translate(-12 14) rotate(-9 212 296)">
+      <circle cx="212" cy="296" r="118" fill="#1b4d3e"/>
+      <circle cx="176" cy="268" r="19" fill="#faf9f7"/>
+      <circle cx="250" cy="262" r="14" fill="#faf9f7"/>
+      <path d="M 162 326 Q 214 380 264 318"
+            fill="none" stroke="#faf9f7" stroke-width="21" stroke-linecap="round"/>
+    </g>
+
+    <!-- question mark, leaning the other way -->
+    <g transform="translate(34 -22) rotate(14 366 196)" fill="none" stroke="#1b4d3e"
+       stroke-width="31" stroke-linecap="round">
+      <path d="M 322 148 C 322 100 402 100 402 148 C 402 191 360 191 360 231"/>
+      <path d="M 360 284 L 360 284"/>
+    </g>
+  </g>
+</svg>
