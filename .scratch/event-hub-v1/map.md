@@ -39,14 +39,29 @@ Both are pure execution with every decision already made, and **both have now la
 [13 — Top 5 on bio](./issues/13-films-top-five.md) put the real film ranking in the sidebar.
 
 **Every section that will ever hold data now holds it.** The band card is link-outs by design and
-the Facebook link always was, so progressive replacement is finished: there is nothing left on the
-page standing in for data. The only tickets remaining are the two that write down what was built —
-[09 — Data model](./issues/09-data-model.md), now fully unblocked though 11 and 13 have answered
-much of it in code, and [10 — Assemble the v1 spec](./issues/10-write-v1-spec.md).
+the Facebook link always was, so progressive replacement of *text* is finished: there is nothing
+left on the page standing in for data.
 
-**The question the map rests on is now Robert's to answer, not a ticket's**: whether the hub is
+**Then use answered back — with images.** Robert, after living with the live page: *"when I'm
+browsing, I'm really looking at the images."* This is the first design signal to come from real use
+rather than speculation, which is precisely what the map deferred its layout questions to wait for.
+It also part-answers the question the whole map rests on: he is browsing the page.
+
+Feasibility turned out to be near-free, so this is an amendment to v1's surface, not a new
+destination — see [research/14-images.md](./research/14-images.md). Event images and mainstream film
+posters are **already in HTML the renderer fetches**, at zero extra requests; only art-house posters
+cost one new GET. Two build tickets, both takeable now and independent of each other:
+[14 — Event thumbnails](./issues/14-event-thumbnails.md) and
+[15 — Film posters](./issues/15-film-posters.md). Both **block**
+[09 — Data model](./issues/09-data-model.md), so the model is written once, with images in it,
+rather than twice.
+
+Note 15 **reopens a resolved decision** — 13 dropped the poster placeholder because no posters were
+in scope. That premise was simply wrong, so reopening it is legitimate rather than churn.
+
+**The question the map rests on remains Robert's to answer, not a ticket's**: whether the hub is
 useful enough to be worth finishing. The whole page is real now; living with it is the only way to
-find out.
+find out — and it has already produced one answer, which is what images are.
 
 **Domain**: personal event aggregation, Uppsala, Sweden. Single user (Robert). Swedish-language sources.
 
@@ -77,6 +92,11 @@ find out.
   states; a broken script must never cost Robert the page. *Unchanged in substance by
   [08](./issues/08-build-pipeline.md)* — only *when* the render happens moved, from build time to
   request time.
+- **Images are hotlinked, never proxied or stored.** Settled while scoping
+  [14](./issues/14-event-thumbnails.md) and [15](./issues/15-film-posters.md). Both sources already
+  serve pre-scaled derivatives, so proxying through the function would double bandwidth, add a
+  failure mode per image and turn a static page into an image CDN — the exact maintenance liability
+  this map keeps refusing. A broken image degrades to its `alt` text: one card, never the page.
 - **Three distinct sections, never merged into one timeline.** They come from three separate
   questions and have three different data shapes.
 - **Day-grouped vertical list, not a month grid.** ~14-day horizon.
@@ -92,10 +112,11 @@ find out.
 
 **The v1 surface**, agreed:
 
-- Events from **hejauppsala.com**, day-grouped, + link out to hejauppsala
+- Events from **hejauppsala.com**, day-grouped, **each row carrying a thumbnail**, + link out to
+  hejauppsala
 - **Weather**, coming 7 days as icons, from **SMHI** + link out to SMHI
-- **Top 5 films** now showing in Uppsala (ranked by number of showings this week), with films 6–10
-  behind a `<details>` fold, + one link out per operator
+- **Top 5 films** now showing in Uppsala (ranked by number of showings this week), **with posters**,
+  films 6–10 behind a `<details>` fold, + one link out per operator
 - ~~**Band gigs** in Sweden for a configured artist list, via **Ticketmaster Discovery API**~~ —
   **cut from v1 by [08](./issues/08-build-pipeline.md)**; the card stays as link-outs. See *Out of scope*.
 - **Link out to Facebook Events** for manual browsing — no scraping
@@ -197,6 +218,17 @@ three questions with data, and the third with links.**
 
 In scope, but not yet sharp enough to ticket:
 
+- **Whether the page should become image-first browsing, rather than text rows with pictures on
+  them.** [14](./issues/14-event-thumbnails.md) ships a thumbnail in the row because it disturbs
+  nothing [11](./issues/11-ongoing-events-and-day-slices.md) settled — the 14 slices survive, the
+  Saturday column stays scannable. But Robert's actual words were *"I'm really looking at the
+  images"*, and a thumbnail serves **recognition**, not browsing. If images are how he genuinely
+  scans, the day-slice layout itself is what needs to change, and that is a different and much
+  larger ticket than adding thumbnails. Deliberately deferred — *"we can adjust the image placement
+  later"* — because the cheap version has to be on the page before the expensive question can be
+  judged. This is the same bet [11](./issues/11-ongoing-events-and-day-slices.md) made about day
+  slices, and it paid.
+
 - **Whether hejauppsala's category taxonomy is worth surfacing beyond a label.** 01 found 17
   categories mixing three axes — genre, geography, editorial flags. 11 put two of them to work:
   `uppsala` is the geography filter (it drops 4 posts in 117) and the genre axis prints as the
@@ -229,7 +261,10 @@ In scope, but not yet sharp enough to ticket:
   until it does. With [13](./issues/13-films-top-five.md) landed the question is now in front of
   Robert **in full**: every section holds real data, so there is nothing left to build that would
   make the page a fairer test. 09 and 10 are the only tickets that would be wasted if the answer
-  is no.
+  is no. **Now part-answered**: Robert is browsing it, and browsing produced a concrete request
+  ([14](./issues/14-event-thumbnails.md), [15](./issues/15-film-posters.md)) rather than a shrug.
+  That is weak evidence of "yes" — a page nobody opens generates no feature requests — but it is
+  evidence of *use*, not yet of *usefulness*, so this stays open.
 - **Whether the second week of the horizon earns its keep.** 11 kept all 14 slices rather than
   cutting to 7, on the grounds that the far end is where plannable things live. That is a
   prediction about how Robert reads the page, and the page can now check it.
@@ -271,4 +306,7 @@ Ruled beyond this destination. Returns only as a fresh effort, not a resumption.
 - **General Stockholm-area events.** Band gigs are Sweden-wide; everything else is Uppsala only.
 - **Live Spotify integration.** OAuth tokens expire — a one-off export violates nothing and
   breaks never. See [05 — Export Spotify artist list](./issues/05-export-spotify-artists.md).
-- **Film ratings / TMDB.** A whole extra integration for a nice-to-have.
+- **Film ratings / TMDB.** A whole extra integration for a nice-to-have. **Reconfirmed for posters**
+  while scoping [15](./issues/15-film-posters.md): TMDB would mean an API key — ending v1's
+  secretless property — plus title matching against a global database, to obtain posters nfbio and
+  Fyrisbiografen hand us for free. See [research/14-images.md](./research/14-images.md).

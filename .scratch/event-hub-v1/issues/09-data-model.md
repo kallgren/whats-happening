@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Blocked by: 01, 02, 06
+Blocked by: 01, 02, 06, 14, 15
 
 ## Question
 
@@ -17,6 +17,13 @@ The three sections come from three genuinely different shapes:
 - **Film** (Filmstaden): a title with *many* showtimes, ranked by showing count. It is not an
   occurrence at all, and forcing it into an Event shape is precisely what makes existing
   aggregators unusable.
+
+**Amended by images.** [14](./14-event-thumbnails.md) and [15](./15-film-posters.md) each add an
+image to their type, which is the *first* attribute the two remaining shapes genuinely share — and
+they share it with different guarantees. An event's image is always present and arbitrarily
+proportioned; a film's poster is sometimes absent and a uniform portrait. Whether that is one
+nullable field on a supertype or two unrelated fields is now a live part of this ticket's question
+rather than a detail, which is why both block it.
 
 Decide:
 
