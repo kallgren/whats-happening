@@ -2,7 +2,7 @@
 
 Type: grilling
 Status: open
-Blocked by: 01, 02, 04, 06
+Blocked by: 01, 02, 06
 
 ## Question
 
@@ -11,8 +11,9 @@ What are the domain types, and do the three sections share one?
 The three sections come from three genuinely different shapes:
 
 - **Event** (hejauppsala): one occurrence, one date range, a venue, categories.
-- **Gig** (Ticketmaster): an occurrence too, but keyed on an *artist* — the artist is the reason
-  it is on the page, not the venue.
+- ~~**Gig** (Ticketmaster)~~ — **cut from v1 by [08](./08-build-pipeline.md)**; the band section is
+  out of scope and ships as link-outs only. Two shapes remain, which weakens the case for a
+  supertype further still.
 - **Film** (Filmstaden): a title with *many* showtimes, ranked by showing count. It is not an
   occurrence at all, and forcing it into an Event shape is precisely what makes existing
   aggregators unusable.

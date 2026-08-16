@@ -1,7 +1,7 @@
 # 08 — Build pipeline and stack
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -66,3 +66,88 @@ Open for this ticket:
    changes are testable? This should be trivially true, but state it.
 
 Uses `/grilling` and `/domain-modeling`.
+
+## Answer
+
+**The page is rendered at request time by a Vercel serverless function, not built ahead of time by
+a scheduled job.** This amends the map's standing preference of *"static site + scheduled GitHub
+Action"*. There is no GitHub Action, no cron, no committed build output, and no secret anywhere.
+
+### Why the preference was amended
+
+The preference's stated *reason* was "no runtime, no database, no auth, no expiring tokens" — all
+in service of *build it and never touch it again*. A stateless render function has no database, no
+auth and no tokens, so it violates the letter of the preference but not one word of its rationale.
+That made it worth a straight fight rather than a rules-lawyered dismissal.
+
+What decided it was not simplicity — the scraping and parsing code is **identical** either way, and
+that is ~90% of the work. The real difference is a few lines of Action YAML versus a few lines of
+cache headers. Request time won on two other things:
+
+1. **It deletes this ticket's question 0.** [07](./07-hub-page-layout.md) left publishing blocked on
+   `vercel git connect` failing, needing either a manual dashboard step or a `VERCEL_TOKEN` secret.
+   Request time removes the question: the function *is* the deploy.
+2. **The spike and the product are the same artifact.** `vercel dev` renders real sources on
+   localhost with no pipeline; `vercel deploy --prod` ships that same code. Under the build-time
+   plan, "just get real events on the page to see if this is useful" required either building the
+   whole Action first or writing a throwaway.
+
+### The shape
+
+- **A function at `/` returns fully rendered HTML.** No client-side fetching, no loading states,
+  no JS on the critical path. This keeps the Notes' *"the page must arrive as complete HTML"*
+  intact word-for-word — only *when* the render happens has changed. It also means reverting to a
+  cron later is a change of trigger, not a rewrite.
+- **Client-side scraping was never possible**, which is what forced a server. Measured response
+  headers: SMHI sends `access-control-allow-origin: *`, but **hejauppsala and nfbio send no CORS
+  headers at all**, and Ticketmaster would need a key in the page source of a public repo. Two of
+  the sources that matter most are simply unreachable from browser JS.
+- **`Cache-Control: s-maxage=3600, stale-while-revalidate=86400`.** Fresh within the hour, ~24
+  origin fetch cycles a day (hejauppsala's own CDN says `max-age=14400`, SMHI's `3600`, so this is
+  courteous), and a dead source keeps serving the last good render for up to a day.
+- **TypeScript, running natively on Vercel functions** — no tsconfig, no bundler, no build step.
+  One runtime dependency, **`node-html-parser`**, for the two HTML sources. Regex was rejected:
+  [01](./01-hejauppsala-event-dates.md) found the dates hang off theme utility classes, and regex
+  over that yields a page that lies rather than one that fails.
+- **CSS moves to a static `styles.css`** rather than living in a template literal. No template
+  engine — template literals are enough for ~100 lines of markup.
+- **Local development is `vercel dev`**, hitting real sources. Question 6 answered.
+- `index.html` stops being the artifact; `vercel.json` rewrites `/` to the function.
+
+### Failure behaviour (this ticket's inherited "empty vs broken" fog)
+
+**Per-section, on the page itself. No alerting, and deliberately no watchdog job.**
+
+A scheduled health check was proposed and rejected. Robert is the only user *and* the only consumer,
+so an alert can never arrive meaningfully earlier than the moment he cares: if a section is broken
+and he has not opened the page, he did not need it. Worse, the mechanism is unsound — **GitHub
+disables scheduled workflows in a repo with no pushes for 60 days**, so a watchdog on a
+working-and-therefore-quiet project switches itself off during exactly the long calm stretch it
+exists to cover. A watchdog that dies when things are calm is worse than none, because the silence
+gets trusted.
+
+The page therefore reports on itself, and this is load-bearing rather than cosmetic — with
+`stale-while-revalidate`, "working fine" and "broken since Tuesday" are otherwise the same pixels:
+
+- **Every section shows how old its data is** (`senast uppdaterad HH:MM`).
+- **A failed fetch renders an explicit `kunde inte hämta`** in that section, never an empty one.
+  Each source keeps the guard its research ticket specified: weather throws on non-200; events fail
+  when a `/kalender/` page yields 40 links but under ~35 parsed dates; films fail under 5
+  screenings in 7 days.
+- **A genuinely quiet week renders as an explicit empty state**, worded so it cannot be confused
+  with a failure. This retires the "loading forever" skeletons v0 shipped.
+- **One broken source never costs the other sections.** Each renders independently.
+
+### Secrets
+
+**None.** Robert deferred the band section entirely (placeholder card and its link-outs stay as
+they are), which removed the Ticketmaster API key — the only secret the design ever needed. See the
+map's *Out of scope*; tickets 03, 04 and 05 are closed with it. Question 4 answered: nothing needs
+a secret. Question 5 is moot for the same reason — with no artist list, the public repo and public
+URL expose nothing.
+
+### Deliberately left to the build
+
+Trivially reversible, and none of them gate landing real data: the exact cache TTL, whether CSS
+ends up in one file or two, and the internal file layout of the function. Settling these ahead of
+seeing real events on the page would have been premature precision.

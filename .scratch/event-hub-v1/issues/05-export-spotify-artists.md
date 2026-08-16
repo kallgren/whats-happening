@@ -1,7 +1,7 @@
 # 05 — Export the followed-artist list from Spotify, once
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -28,3 +28,10 @@ task rather than a live integration.
 Keep both the Spotify artist name **and** its Spotify ID in the file; the ID may help disambiguate
 during Ticketmaster matching. See
 [04 — Ticketmaster artist matching](./04-ticketmaster-artist-matching.md).
+
+## Answer
+
+**Closed as out of scope**, not done. Robert deferred the band section entirely while resolving
+[08 — Build pipeline and stack](./08-build-pipeline.md); the placeholder card and its link-outs
+stay on the page unchanged. Ticketmaster is now a future effort, not part of this map. See the
+map's *Out of scope*.

@@ -1,7 +1,7 @@
 # 03 — Register a Ticketmaster developer account and get an API key
 
 Type: task
-Status: open
+Status: resolved
 Blocked by: —
 
 ## Question
@@ -24,3 +24,10 @@ This is HITL: Robert must create the account himself.
 **Record in the answer**: where the key is stored (it must end up as a **GitHub Actions secret**,
 never committed), and the exact secret name the build will read. Do not paste the key into this
 file or into the map.
+
+## Answer
+
+**Closed as out of scope**, not done. Robert deferred the band section entirely while resolving
+[08 — Build pipeline and stack](./08-build-pipeline.md); the placeholder card and its link-outs
+stay on the page unchanged. Ticketmaster is now a future effort, not part of this map. See the
+map's *Out of scope*.

@@ -24,10 +24,16 @@ the critical path — no single research ticket can leave Robert with nothing �
 ticket independently shippable.
 
 **v0 has shipped** — [07 — Build v0: the link hub](./issues/07-hub-page-layout.md) is resolved and
-the page is live at **https://robertkallgren.com/whats-happening/**. Every remaining ticket upgrades
-one link on that live page into real data, in place. They can proceed in any order, or in parallel;
-[08 — Build pipeline and stack](./issues/08-build-pipeline.md) is due as soon as the first of them
-is ready to land data.
+the page is live at **https://whats-happening-events.vercel.app**. Every remaining ticket upgrades
+one link on that live page into real data, in place.
+
+**The pipeline question is now settled too** — [08 — Build pipeline and stack](./issues/08-build-pipeline.md)
+chose request-time rendering by a Vercel function over a scheduled build, which means there is no
+plumbing left to stand up before data can land. The next move is the one Robert named directly:
+get **real hejauppsala events into the Spalter view** and judge whether the hub is useful enough to
+be worth finishing. That is [11 — Ongoing events, and whether day slices survive real
+volume](./issues/11-ongoing-events-and-day-slices.md), which is unblocked and on the frontier.
+Everything downstream of it is a bet on an answer nobody has yet.
 
 **Domain**: personal event aggregation, Uppsala, Sweden. Single user (Robert). Swedish-language sources.
 
@@ -39,20 +45,25 @@ is ready to land data.
 - **Minimum work, 80/20.** Every decision resolves toward less to build and less to maintain.
 - **"Build it and never touch it again."** The feared cost is *sources breaking*, not state.
   Prefer no runtime, no database, no auth, no expiring tokens.
-- **Static site + scheduled GitHub Action, published to Vercel.** No server. A broken source
-  surfaces as a failed workflow email. The URL is public; nothing here is secret. *Amended by
-  [07](./issues/07-hub-page-layout.md)*: the host was GitHub Pages until v0 shipped, but a Pages
+- **~~Static site + scheduled GitHub Action~~ → rendered at request time by a Vercel function.**
+  *Amended twice.* By [07](./issues/07-hub-page-layout.md): the host was GitHub Pages, but a Pages
   project site is forced onto the account's user-level custom domain (`robertkallgren.com`), which
-  Robert rejected. The *shape* — static file, no runtime, scheduled regeneration — is unchanged;
-  only the host moved.
+  Robert rejected — so the host moved to Vercel. Then by
+  [08](./issues/08-build-pipeline.md): the *shape* moved too. There is no Action, no cron and no
+  committed build output; a stateless function renders the page per request behind a one-hour CDN
+  cache. This keeps the rationale below intact — no database, no auth, no expiring tokens, no
+  secrets at all — while dropping the scheduler. The URL is public; nothing here is secret.
+  A broken source no longer surfaces as a failed-workflow email but **on the page itself**.
 - **Vanilla HTML/CSS/JS, no framework, for as long as it holds.** Considered and rejected React for
   now — v0 has no client state whatsoever, so the decision is not yet due, and how far vanilla
   carries this is a deliberate experiment. Repeated rows are templating, not a framework concern:
   a "component" here is a function returning a string. Revisit only when real interaction arrives
   and vanilla stops paying — converting one page later is a couple of hours, and by then it is a
   decision against known requirements rather than predicted ones.
-- **Render to static HTML at build time**, whatever the eventual stack. The page must arrive as
-  complete HTML; a broken script must never cost Robert the page.
+- **The page must arrive as complete, server-rendered HTML.** No client-side fetching, no loading
+  states; a broken script must never cost Robert the page. *Unchanged in substance by
+  [08](./issues/08-build-pipeline.md)* — only *when* the render happens moved, from build time to
+  request time.
 - **Three distinct sections, never merged into one timeline.** They come from three separate
   questions and have three different data shapes.
 - **Day-grouped vertical list, not a month grid.** ~14-day horizon.
@@ -71,11 +82,13 @@ is ready to land data.
 - Events from **hejauppsala.com**, day-grouped, + link out to hejauppsala
 - **Weather**, coming 7 days as icons, from **SMHI** + link out to SMHI
 - **Top 5 films** now showing in Uppsala (ranked by number of showings this week) + link out to cinemas
-- **Band gigs** in Sweden for a configured artist list, via **Ticketmaster Discovery API**
+- ~~**Band gigs** in Sweden for a configured artist list, via **Ticketmaster Discovery API**~~ —
+  **cut from v1 by [08](./issues/08-build-pipeline.md)**; the card stays as link-outs. See *Out of scope*.
 - **Link out to Facebook Events** for manual browsing — no scraping
 
-Each of the first four ships as a **link first**, then upgrades to live data. The Facebook link is
-permanent and never upgrades.
+Each of the first three ships as a **link first**, then upgrades to live data. The Facebook link and
+the band card are permanent link-outs and never upgrade. **v1 therefore answers two of Robert's
+three questions with data, and the third with links.**
 
 ## Decisions so far
 
@@ -112,6 +125,19 @@ permanent and never upgrades.
   per-film counts, so **top-5-by-showings survives unchanged**. The counts undercount titles also
   playing at Filmstaden: rank on them, never print them. Three link-outs, one per operator.
 
+- [08 — Build pipeline and stack](./issues/08-build-pipeline.md) — **there is no build.** The page is
+  rendered **at request time by a Vercel serverless function**, behind
+  `s-maxage=3600, stale-while-revalidate=86400`. No Action, no cron, no committed output, **no
+  secrets at all**. Client-side scraping was never possible — hejauppsala and nfbio send no CORS
+  headers — so a server was forced; the win is that it deletes 07's unresolved deploy plumbing and
+  makes the spike and the product the same artifact (`vercel dev` → `vercel deploy --prod`).
+  TypeScript native on Vercel, one dependency (`node-html-parser`), CSS to a static file.
+  **Failure shows on the page, not in email**: per-section `senast uppdaterad`, explicit
+  `kunde inte hämta`, explicit quiet-week empty state, one dead source never costs the others. A
+  scheduled watchdog was considered and rejected — Robert is the only consumer, so an alert can
+  never beat him to it, and GitHub disables cron workflows in a repo quiet for 60 days, so it would
+  switch itself off during exactly the calm it was meant to cover.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -133,12 +159,27 @@ In scope, but not yet sharp enough to ticket:
 - **Whether the page ever needs a framework.** Deliberately deferred, not settled. v0 has no client
   state. The trigger to revisit is real interaction — dismissal, filters, view toggles — outgrowing
   vanilla JS, most likely during the LLM-ranking effort. Decide then, against real requirements.
-- **Ticketmaster's real coverage of small Uppsala venues**, and whether the gap is big enough to
-  justify revisiting Bandsintown later.
+- **Whether the hub is useful enough to be worth finishing at all.** The one question the whole map
+  now rests on, and it cannot be answered by discussion — only by real hejauppsala events sitting in
+  the Spalter view. [11](./issues/11-ongoing-events-and-day-slices.md) is where it gets answered.
+  Until then, 09 and 10 are bets on an unknown.
+
+<!-- Ticketmaster coverage of small Uppsala venues moved to Out of scope with the band section -->
+
 
 ## Out of scope
 
 Ruled beyond this destination. Returns only as a fresh effort, not a resumption.
+
+- **Band gigs / Ticketmaster, and everything feeding them.** Cut from v1 while resolving
+  [08](./issues/08-build-pipeline.md): Robert deferred the section outright. It carried the design's
+  only API key, its only secret, and its only source needing a curated input list from him — so
+  cutting it makes v1 secretless. The card and its link-outs (Ticketmaster, Songkick, GigWhere) stay
+  on the page permanently, the same treatment the Facebook link gets. Closed with it, undone rather
+  than resolved: [03 — Ticketmaster API key](./issues/03-ticketmaster-api-key.md),
+  [04 — Artist matching](./issues/04-ticketmaster-artist-matching.md),
+  [05 — Export Spotify artists](./issues/05-export-spotify-artists.md). This is a strong candidate
+  for the effort *after* the LLM-ranking one.
 
 - **LLM prose-taste relevance ranking.** The agreed design — Robert writes a paragraph describing
   what he likes, an LLM scores each event at ingest, ranking not hiding. **This is the intended
