@@ -56,13 +56,19 @@ cost one new GET. Two build tickets, independent of each other:
 [09 — Data model](./issues/09-data-model.md), so the model is written once, with images in it,
 rather than twice.
 
-**14 has landed** — every event row on the page carries a picture, 120/120 events parsed one, and it
-cost no extra requests exactly as the research promised. [15](./issues/15-film-posters.md) is now the
-**only ticket on the frontier**, and the last thing standing between here and
-[09](./issues/09-data-model.md).
+**Both have landed.** [14](./issues/14-event-thumbnails.md) put a picture on every event row at zero
+extra requests, and [15](./issues/15-film-posters.md) put a poster on every film row for one extra
+GET. 15 **reopened a resolved decision** — 13 dropped the poster placeholder because no posters were
+in scope — and that was legitimate rather than churn, because the premise was simply wrong.
 
-Note 15 **reopens a resolved decision** — 13 dropped the poster placeholder because no posters were
-in scope. That premise was simply wrong, so reopening it is legitimate rather than churn.
+**The page is now images throughout, and [09 — Data model](./issues/09-data-model.md) is the
+frontier**, with images in the shape it has to describe, which is why it waited.
+
+15 is also the first ticket where **the research was wrong in a way that would have shipped**. Its
+prescribed Fyrisbiografen pairing adopted an untitled promo anchor as a film and shifted every
+art-house poster onto the previous film — eight parsed, eight matched, nothing thrown, all wrong.
+Worth carrying forward: this map's parses have been reliable enough that verifying counts felt
+sufficient, and counts are exactly what an off-by-one preserves.
 
 **The question the map rests on remains Robert's to answer, not a ticket's**: whether the hub is
 useful enough to be worth finishing. The whole page is real now; living with it is the only way to
@@ -236,6 +242,20 @@ three questions with data, and the third with links.**
   reflows nothing. **Stock-photo detection rejected** — filename heuristics against a source that
   reuploads freely would rot silently, and a generic photo still anchors the eye better than a hole.
 
+- [15 — Film posters](./issues/15-film-posters.md) — **the top 5 and the fold's 6–10 all carry a
+  poster**, 10 of 10 on a live render, for **one** extra GET. nfbio's come free from the schedule
+  document, matched to the *next* title anchor at 439–517 characters against ~19,000 to the previous
+  film's — a 40× margin, bounded by a 2,000-character window so a layout change loses posters rather
+  than misplacing them. The poster's own `alt` was rejected as the join key: it is the *media asset's*
+  name, right in 22 of 26 and silently wrong in 4. **The Fyrisbiografen homepage cost a real bug** —
+  its *Veckans program* promo is an untitled anchor around a titled `<img>`, which the first parse
+  adopted as a film, shifting every art-house poster by one; the title must now be on the `<a>` and
+  the image inside it. **Missing posters are real here** (6 of 23 films, all art-house, all below the
+  fold this week) and degrade to `.thumb`'s grey box so the titles keep one left edge. The rank stays
+  a quiet number in its own column rather than a badge over the artwork. A dead homepage **never
+  reaches `cinema.failed`** — that would print "listan är ofullständig" and shorten the cache about a
+  ranking that is complete, so this narrows 13's degraded-section rule: posters are not a section.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -253,6 +273,10 @@ In scope, but not yet sharp enough to ticket:
   a thing to look at. 14 also fixed the *size* of the gap: the slice thumbnail is 3.25rem and cannot
   grow much, because the 15rem column and a fourteen-event Saturday are what cap it. So the question
   is not "bigger thumbnails" — it is whether the **column** is the right container at all.
+  [15](./issues/15-film-posters.md) makes the comparison concrete rather than hypothetical: the film
+  card is now genuinely image-led, five 3rem posters in a sidebar, sitting next to fourteen columns
+  of 3.25rem thumbnails. Both are on the same screen, so Robert can see which one he actually browses
+  by — and the answer to this is now a matter of looking rather than of arguing.
 
 - **Whether hejauppsala's category taxonomy is worth surfacing beyond a label.** 01 found 17
   categories mixing three axes — genre, geography, editorial flags. 11 put two of them to work:

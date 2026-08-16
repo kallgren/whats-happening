@@ -51,6 +51,11 @@ export type Film = {
   cinemas: CinemaId[];
   /** Ranks the list. Deliberately never rendered — see the note above. */
   count: number;
+  /**
+   * Ticket 15. Hotlinked at whichever source has one; null when neither does,
+   * which is a real case here unlike ticket 14's events. Never a ranking input.
+   */
+  poster: string | null;
 };
 
 export type Cinema = {
@@ -127,6 +132,43 @@ export function parseNfbio(html: string): Screening[] {
   return out;
 }
 
+/**
+ * Ticket 15. The same document that gives the schedule also carries a poster
+ * per showing film, so the mainstream half of this costs no extra request.
+ *
+ * Posters are matched to films by the *next* title anchor after the image, and
+ * not by the image's own `alt`. The alt looks tempting — it is the film title 22
+ * times in 26 — but it is the media asset's name, so the other four read
+ * "HP del 5-8" for "Harry Potter Maraton, Film 5-8" and "Hunger games maraton
+ * poster" for "Hunger Games Maraton". A join key that is right most of the time
+ * is the invisible failure ticket 13 refused for title matching; the anchor is
+ * the structural fact.
+ *
+ * The window is the guard. Measured, a poster sits 439–517 characters before
+ * its title and ~19,000 before the next film's, a 40× separation — so a bound
+ * well inside that gap means a layout change loses posters rather than hanging
+ * them on the wrong films.
+ */
+const POSTER_TITLE_WINDOW = 2000;
+
+export function parseNfbioPosters(html: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const poster = /<img[^>]+src="([^"]*\/movie_poster_teaser\/[^"]+)"/gi;
+
+  let m: RegExpExecArray | null;
+  while ((m = poster.exec(html))) {
+    const after = html.slice(m.index, m.index + POSTER_TITLE_WINDOW);
+    const t = /field--name-title[^>]*>([^<]+)</i.exec(after);
+    if (!t) continue;
+
+    // Root-relative, and the `?itok=` is a Drupal image-style signature: strip
+    // it and the URL 403s, so the query string travels with the path.
+    out.set(key(decodeEntities(t[1])), new URL(decodeEntities(m[1]), "https://www.nfbio.se").toString());
+  }
+
+  return out;
+}
+
 /** Only ever used when the title span moves; ugly, but it still ranks. */
 const humanise = (slug: string) =>
   slug.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
@@ -141,7 +183,7 @@ const decodeEntities = (s: string) =>
     .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(Number(d)))
     .replace(/&[a-zA-Z]+;/g, (x) => ENTITIES[x] ?? x);
 
-async function fetchNfbio(): Promise<Screening[]> {
+async function fetchNfbio(): Promise<{ screenings: Screening[]; posters: Map<string, string> }> {
   const res = await fetch(NFBIO_URL, { headers: { "user-agent": UA } });
   if (!res.ok) throw new Error(`nfbio svarade ${res.status}`);
   const html = await res.text();
@@ -159,7 +201,9 @@ async function fetchNfbio(): Promise<Screening[]> {
     throw new Error(`nfbio: ${links} visningar men bara ${screenings.length} tolkade — layouten har nog ändrats`);
   }
 
-  return screenings;
+  // Posters ride along on a document already in hand, so they are never their
+  // own failure here: if this parse finds nothing the schedule is still good.
+  return { screenings, posters: parseNfbioPosters(html) };
 }
 
 // --- Fyrisbiografen -----------------------------------------------------
@@ -214,6 +258,58 @@ async function fetchFyris(): Promise<Screening[]> {
   return parseFyris(await res.text());
 }
 
+/**
+ * Ticket 15, and the one extra request the whole thing costs: the kalendarium
+ * carries dates but no posters, and the homepage carries posters but no dates.
+ *
+ * It is worth paying for. Ticket 13 found the art-house titles are exactly what
+ * lives in the `<details>` fold, so without this the missing posters would line
+ * up perfectly with the fold and read as a broken feature rather than as thin
+ * data.
+ *
+ * This page is a "Visas nu" wall with no dates on it, so it is a title→poster
+ * lookup table and **nothing else**. Ticket 02 established that Fyrisbiografen
+ * can never be a sole input to the ranking; a dateless page could not be one
+ * even if we wanted it to.
+ */
+const FYRIS_HOME = "https://www.fyrisbiografen.se/";
+
+/**
+ * Each poster is an anchor whose `title` is the film and whose `img` sits
+ * inside it. Two things make that pairing safe, and both were caught failing
+ * before they were added:
+ *
+ * - The title must be on the **anchor**. The site's "Veckans program" promo is
+ *   an untitled anchor around an `<img title="Veckans program">`, so a rule
+ *   that took any `title=` adopted the promo as a film, stole the first
+ *   poster — and shifted **every** film onto the wrong picture. Silent, total,
+ *   and exactly the invisible failure ticket 13 refused fuzzy matching for.
+ * - The image must be **inside** that anchor — no `</a>` may fall between
+ *   them — so an unrelated titled link can never reach forward to the next
+ *   film's poster.
+ *
+ * Filtering to the `media-posters/` path does the rest: it is the only thing
+ * separating a poster from the generic `ticket-calendar.png` booking rows.
+ */
+export function parseFyrisPosters(html: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const poster =
+    /<a\s[^>]*\btitle="([^"]*)"[^>]*>(?:(?!<\/a>)[\s\S]){0,300}?<img[^>]*src="([^"]*\/media-posters\/[^"]+)"/gi;
+
+  let m: RegExpExecArray | null;
+  while ((m = poster.exec(html))) {
+    out.set(key(decodeEntities(m[1])), new URL(decodeEntities(m[2]), FYRIS_HOME).toString());
+  }
+
+  return out;
+}
+
+async function fetchFyrisPosters(): Promise<Map<string, string>> {
+  const res = await fetch(FYRIS_HOME, { headers: { "user-agent": UA } });
+  if (!res.ok) throw new Error(`Fyrisbiografens startsida svarade ${res.status}`);
+  return parseFyrisPosters(await res.text());
+}
+
 const UA = "whats-happening (personal hub)";
 
 // --- ranking ------------------------------------------------------------
@@ -221,7 +317,15 @@ const UA = "whats-happening (personal hub)";
 /** Both cinemas first, so ties resolve toward the one with more seats. */
 const ORDER: CinemaId[] = ["nfbio", "fyris"];
 
-export function rank(screenings: Screening[], today: string, topN = TOP_N + EXTRA_N): Film[] {
+/** Ticket 15: title→poster, per source, joined on the same normalised key. */
+export type Posters = Partial<Record<CinemaId, Map<string, string>>>;
+
+export function rank(
+  screenings: Screening[],
+  today: string,
+  posters: Posters = {},
+  topN = TOP_N + EXTRA_N,
+): Film[] {
   const horizon = addDays(today, FILM_WINDOW_DAYS - 1);
 
   /** Per film, per cinema: how many screenings, and how that cinema names it. */
@@ -241,8 +345,8 @@ export function rank(screenings: Screening[], today: string, topN = TOP_N + EXTR
     else g.at[s.cinema] = { n: 1, title: s.title, url: s.url };
   }
 
-  return [...groups.values()]
-    .map((g): Film => {
+  return [...groups.entries()]
+    .map(([k, g]): Film => {
       // The two sources spell the same film slightly differently and the row
       // links to exactly one of them, so both the title and the link come from
       // whichever cinema shows it more — that is where someone is likeliest to
@@ -250,7 +354,15 @@ export function rank(screenings: Screening[], today: string, topN = TOP_N + EXTR
       // screenings arrive lets the last one parsed win, which is no rule at all.
       const cinemas = ORDER.filter((c) => g.at[c]);
       const main = cinemas.reduce((a, b) => (g.at[b]!.n > g.at[a]!.n ? b : a));
-      return { title: g.at[main]!.title, url: g.at[main]!.url, cinemas, count: g.count };
+
+      // Same rule as the title and the link, for the same reason: a film on
+      // both screens is described by the cinema showing it more. Falls through
+      // to the other source, because one poster is one poster — the row does
+      // not care where the picture came from, only that it has one.
+      const poster =
+        [main, ...cinemas].map((c) => posters[c]?.get(k)).find(Boolean) ?? null;
+
+      return { title: g.at[main]!.title, url: g.at[main]!.url, cinemas, count: g.count, poster };
     })
     .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, "sv"))
     .slice(0, topN);
@@ -259,18 +371,36 @@ export function rank(screenings: Screening[], today: string, topN = TOP_N + EXTR
 export async function fetchFilms(today: string): Promise<Cinema> {
   // Independently, in parallel: the whole point of two sources is that one of
   // them dying degrades the ranking instead of emptying the section.
-  const [a, b] = await Promise.all([
+  //
+  // Ticket 15 adds a third fetch and a third failure shape. It is deliberately
+  // *not* one of these two: a dead Fyrisbiografen homepage costs art-house
+  // posters and nothing else, so it must never reach `failed` — that flag makes
+  // the page say "listan är ofullständig", which would be a lie about the
+  // ranking. Missing posters say so by being missing.
+  const [a, b, fyrisPosters] = await Promise.all([
     fetchNfbio().then(ok, () => fail("nfbio")),
-    fetchFyris().then(ok, () => fail("fyris")),
+    fetchFyris().then((screenings) => ok({ screenings }), () => fail("fyris")),
+    fetchFyrisPosters().catch(() => new Map<string, string>()),
   ]);
 
   const failed = [...a.failed, ...b.failed];
   return {
-    films: rank([...a.screenings, ...b.screenings], today),
+    films: rank([...a.screenings, ...b.screenings], today, {
+      nfbio: a.posters,
+      fyris: fyrisPosters,
+    }),
     failed,
     error: failed.length === 2 ? "båda biograferna kunde inte läsas" : null,
   };
 }
 
-const ok = (screenings: Screening[]) => ({ screenings, failed: [] as string[] });
-const fail = (id: CinemaId) => ({ screenings: [] as Screening[], failed: [CINEMA_NAME[id]] });
+const ok = (r: { screenings: Screening[]; posters?: Map<string, string> }) => ({
+  screenings: r.screenings,
+  posters: r.posters ?? new Map<string, string>(),
+  failed: [] as string[],
+});
+const fail = (id: CinemaId) => ({
+  screenings: [] as Screening[],
+  posters: new Map<string, string>(),
+  failed: [CINEMA_NAME[id]],
+});

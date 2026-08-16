@@ -186,15 +186,32 @@ function eventsBody(view: EventsView, error: string | null, wxByDate: Map<string
 }
 
 // --- film ---------------------------------------------------------------
-// Ticket 13. The prototype's row was rank + poster + title + "12 visningar
-// denna vecka". Two of those four are gone: there are no poster images in scope
-// (TMDB is out), and the count must never be printed, because Filmstaden is
-// unreachable and every count is therefore an undercount. What is left is the
-// rank — which is the whole claim the section makes — and where to go and see it.
+// Ticket 13 built this row as rank + title + cinemas, dropping the prototype's
+// poster because TMDB was out of scope and the placeholder had nothing to
+// become. Ticket 15 found that premise was simply wrong — both cinemas ship
+// posters in pages we fetch anyway — so the placeholder is back, filled.
+//
+// The count stays unprinted. That part of 13 was never about images: Filmstaden
+// is unreachable, so every count is an undercount, fit to sort by and unfit to
+// show.
+
+/**
+ * Ticket 15. `alt=""` for ticket 14's reason — the title is the next thing in
+ * the row and this whole row is the link, so any honest alt is a verbatim
+ * repeat. The empty `<span>` is the missing-poster case, which is real here
+ * unlike on events: six of the twenty-three films in a sample week had no
+ * poster at either source. It keeps the titles on one left edge, because one
+ * row starting 3rem out of line reads as broken rather than as sparse — and
+ * the rank beside it still does the whole job the row had before 15.
+ */
+const poster = (f: Film) =>
+  f.poster
+    ? `<img class="poster" src="${esc(f.poster)}" alt="" loading="lazy" decoding="async">`
+    : `<span class="poster"></span>`;
 
 const filmRow = (f: Film, i: number) => `
           <a class="frow" href="${esc(f.url)}" target="_blank" rel="noopener">
-            <span class="rank">${i + 1}</span>
+            <span class="rank">${i + 1}</span>${poster(f)}
             <span class="body">
               <span class="title">${esc(f.title)}</span>
               <span class="meta">${f.cinemas.map((c) => esc(CINEMA_NAME[c])).join(" · ")}</span>

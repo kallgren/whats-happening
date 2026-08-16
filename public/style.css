@@ -204,22 +204,45 @@ section.card { margin-bottom: 1rem; }
 .onc .thumb { width: 5.25rem; }
 
 /* --- på bio ---
-   Ticket 13. The prototype's film row had a rank, a poster placeholder and a
-   showing count. The poster is gone (no images in scope) and the count is gone
-   on purpose — Filmstaden is unreachable, so every count is an undercount and
-   only fit to sort by. The rank carries the claim on its own. */
+   Ticket 13 built this row as rank + title + cinemas and dropped the
+   prototype's poster, because no poster images were in scope. Ticket 15 put it
+   back: both cinemas serve posters inside pages the renderer already fetches.
+   The count stays gone for 13's reason, which images do not touch — Filmstaden
+   is unreachable, so every count is an undercount, fit to sort by and unfit to
+   show. */
 .films { display: flex; flex-direction: column; }
+/* Baseline alignment worked when the row was all text; an image's baseline is
+   its bottom edge, so it has to become a top alignment now, and the rank drops
+   onto the title's first line by hand. */
 .frow {
-  display: flex; gap: .6rem; align-items: baseline;
+  display: flex; gap: .6rem; align-items: flex-start;
   padding: .45rem 0; border-bottom: 1px solid var(--line);
   text-decoration: none;
 }
 .frow:last-child { border-bottom: 0; }
 .frow:hover .title { color: var(--accent); }
-/* Big and pale: it orders the list without competing with the titles. */
+/* Big and pale: it orders the list without competing with the titles — and
+   since ticket 15 it must not compete with the posters either, which is why it
+   stayed a quiet number in its own column rather than becoming a badge laid
+   over the artwork. */
 .frow .rank {
   font-size: 1.1rem; font-weight: 600; color: var(--line);
   font-variant-numeric: tabular-nums; min-width: 1.1rem; text-align: right;
+  line-height: 1.15; padding-top: .02rem;
+}
+/* Ticket 15. A true 2:3, which is what nfbio serves exactly (230×345) and what
+   Fyrisbiografen's 500×680 is within a few percent of, so the crop is invisible
+   on one source and negligible on the other.
+
+   Fixed width and height with a grey fill, for the same reason as .thumb: this
+   is what both a film with no poster anywhere and a hotlink that 404s degrade
+   to, and neither may reflow the row. 3rem is as wide as the 20rem sidebar
+   affords once the rank and a two-line title are paid for. */
+.frow .poster {
+  flex: 0 0 auto; display: block;
+  width: 3rem; aspect-ratio: 2 / 3;
+  object-fit: cover; border-radius: 4px;
+  background: var(--line);
 }
 .frow .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .frow .title { font-weight: 500; font-size: .9rem; line-height: 1.25; }
