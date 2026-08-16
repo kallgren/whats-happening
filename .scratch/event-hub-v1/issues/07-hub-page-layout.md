@@ -58,3 +58,38 @@ Deploy it. v0 is not done until it is on a URL reachable from Robert's phone.
 
 No *"not interested"* affordance in v1 — dismissal is fogged. Do not design for it, but avoid a
 layout that makes adding it painful later.
+
+## Comments
+
+**2026-08-16 — v0 page built at `index.html`, deploy outstanding.**
+
+Built from the layout prototype, with one deliberate change: **skeletons instead of fake rows**.
+The prototype's approach — plausible fake events marked `FEJK` — asked the reader to keep
+remembering that "Livemusik på Katalin" was invented. Grey placeholder bars can't be misread at
+all, and they still fix the shape for a later fill. Point 2 of this ticket ("keep it obviously
+fake") resolves to *show no content at all*, not *show marked-up fake content*.
+
+What shipped:
+
+1. **Section order.** Weather is a skeleton strip in the header band, beside the title — present,
+   never competing. Then *Vad händer*, then *På bio*, then *Dina band*. On desktop, events in the
+   main column with the two link cards in a sticky right sidebar.
+2. **Skeletons only where data is coming into a shape.** Weather and events have them. *På bio* and
+   *Dina band* are heading + link chips with no skeleton: until they hold data they are link lists,
+   and drawing rows there implied more than v0 has.
+3. **One event view: Spalter.** The prototype's three-way picker (grid / slices / list) was built
+   and then cut back to horizontal day slices, the view worth testing against real data. Note the
+   picker is gone with it, so the `:target`/`:has()` CSS switching is gone too. Below 60rem slices
+   stack into a plain day-grouped list — which is what the dropped "Lista" view was, so mobile lost
+   nothing.
+4. **Effectively zero JavaScript.** One inline script sets today's date, because a hardcoded date
+   in a build-step-less file is wrong by tomorrow. It fails safe: no script, no date line, page
+   intact. Moves to render time at [08 — Build pipeline and stack](./08-build-pipeline.md).
+5. All outgoing links open in new tabs. Added **GigWhere** alongside Ticketmaster and Songkick.
+
+**Not decided here, despite the ticket asking:** *empty vs broken* (point 5). Everything currently
+reads as "loading forever", and nothing on the page says otherwise — the explanatory text was
+deliberately removed. The first ticket to land real data must make a quiet week look different
+from a failed source.
+
+Still open before this ticket resolves: **deploy to a URL reachable from Robert's phone**.
