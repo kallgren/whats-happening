@@ -38,7 +38,7 @@ export function longDate(isoDate: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/** "14:32" in Uppsala — for the per-section "senast uppdaterad" stamp. */
+/** "14:32" in Uppsala — for the "uppdaterad" time beside the date in the header. */
 export function clockInUppsala(d: Date): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
 }

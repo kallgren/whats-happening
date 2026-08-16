@@ -146,7 +146,7 @@ export function renderPage(opts: {
   <header class="pagehead">
     <div class="ph-title">
       <h1>Uppsala</h1>
-      <p class="sub">${esc(longDate(today))}</p>
+      <p class="sub">${esc(longDate(today))} · uppdaterad ${esc(clockInUppsala(fetchedAt))}</p>
     </div>
     <div class="ph-wx">
       <a href="${LINKS.smhi}" target="_blank" rel="noopener">
@@ -161,10 +161,7 @@ ${Array.from({ length: 7 }, () => '          <div><span class="sk ic"></span><sp
     <div class="main">
 
       <section>
-        <h2>
-          <span>Vad händer</span>
-          <span class="stamp">hämtat ${esc(clockInUppsala(fetchedAt))}</span>
-        </h2>
+        <h2><span>Vad händer</span></h2>
 ${eventsBody(view, error)}
         <div class="linkrow">
           <a class="chip" href="${LINKS.heja}" target="_blank" rel="noopener">hejauppsala kalender</a>

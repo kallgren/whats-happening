@@ -76,7 +76,7 @@ h2 a { color: var(--accent); text-transform: none; letter-spacing: 0; font-size:
    column they follow the slice card and need to clear it. */
 .main .linkrow { margin-top: 1rem; }
 .chip {
-  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 999px;
   padding: .3rem .7rem; font-size: .85rem; text-decoration: none;
 }
 .chip:hover { border-color: var(--accent); color: var(--accent); }
@@ -88,7 +88,8 @@ section.card { margin-bottom: 1rem; }
    Ticket 08: there is no build to fail and no workflow email, so a broken
    source has to say so on the page itself, and must never cost the sections
    that still work. */
-.stamp { color: var(--dim); text-transform: none; letter-spacing: 0; font-size: .7rem; font-weight: 400; }
+/* Freshness rides in the header's .sub line, as in the prototype: one page, one
+   fetch, so it belongs to the page rather than to any one section. */
 .failed {
   border: 1px solid var(--line); border-left: 3px solid var(--warn);
   border-radius: 12px; padding: .8rem .9rem; background: var(--card);
@@ -155,12 +156,12 @@ section.card { margin-bottom: 1rem; }
 }
 .ongrid { display: grid; grid-template-columns: 1fr; gap: .4rem; }
 @media (min-width: 40rem) { .ongrid { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); } }
-/* Same warm family as a day row, but boxed rather than barred — related to the
-   slices above, clearly not one of them. */
+/* Plain boxes rather than the warm bars of a day row: these are not one of the
+   slices, and the warm fill read as an alert rather than as a card. */
 .onc {
   display: flex; flex-direction: column; gap: .1rem;
-  text-decoration: none; background: var(--ev-bg);
-  border: 1px solid var(--ev-bar); border-radius: 10px; padding: .5rem .65rem;
+  text-decoration: none; background: var(--card);
+  border: 1px solid var(--line); border-radius: 10px; padding: .5rem .65rem;
 }
 .onc:hover { border-color: var(--accent); }
 .onc .title { font-weight: 500; font-size: .88rem; line-height: 1.25; }
