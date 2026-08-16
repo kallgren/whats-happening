@@ -10,6 +10,8 @@
 import type { Event } from "./hejauppsala.js";
 import type { EventsView } from "./events-view.js";
 import type { DayForecast, Forecast } from "./smhi.js";
+import type { Cinema, Film } from "./cinema.js";
+import { CINEMA_NAME, TOP_N } from "./cinema.js";
 import { weatherEmoji, weatherLabel } from "./smhi.js";
 import { clockInUppsala, dayMonth, longDate, weekdayLong, weekdayShort } from "./dates.js";
 
@@ -29,10 +31,13 @@ const LINKS = {
   ticketmaster: "https://www.ticketmaster.se/",
   songkick: "https://www.songkick.com/",
   gigwhere: "https://www.gigwhere.com/",
-  filmstaden: "https://www.filmstaden.se/",
-  fyris: "https://www.fyrisbiografen.se/",
-  slotts: "https://www.slottsbiografen.se/",
-  regina: "https://www.bioregina.se/",
+  // Ticket 02: one link per operator, and only the three that publish a
+  // programme. Slottsbiografen is a rental hall and Bio Regina is a theatre —
+  // both were in the v0 chip row and neither shows films on a schedule.
+  // Filmstaden's link 403s to curl but is fine in a browser; never link-check it.
+  filmstaden: "https://www.filmstaden.se/uppsala/",
+  nfbio: "https://www.nfbio.se/biograf/uppsala?city=uppsala",
+  fyris: "https://www.fyrisbiografen.se/kalendarium",
 };
 
 /** The genre axis only. Categories also mix geography and editorial flags. */
@@ -159,14 +164,70 @@ function eventsBody(view: EventsView, error: string | null, wxByDate: Map<string
       </div>`;
 }
 
+// --- film ---------------------------------------------------------------
+// Ticket 13. The prototype's row was rank + poster + title + "12 visningar
+// denna vecka". Two of those four are gone: there are no poster images in scope
+// (TMDB is out), and the count must never be printed, because Filmstaden is
+// unreachable and every count is therefore an undercount. What is left is the
+// rank — which is the whole claim the section makes — and where to go and see it.
+
+const filmRow = (f: Film, i: number) => `
+          <a class="frow" href="${esc(f.url)}" target="_blank" rel="noopener">
+            <span class="rank">${i + 1}</span>
+            <span class="body">
+              <span class="title">${esc(f.title)}</span>
+              <span class="meta">${f.cinemas.map((c) => esc(CINEMA_NAME[c])).join(" · ")}</span>
+            </span>
+          </a>`;
+
+/**
+ * Two sources, so failure has three shapes rather than two: both gone is the
+ * only one that empties the section. One gone still ranks — worse, but not
+ * wrong in a way anyone can see — so it says so in a line and shows the list.
+ */
+function filmBody(cinema: Cinema): string {
+  if (cinema.error) {
+    return `
+        <div class="failed">
+          Kunde inte hämta biotablån just nu.
+          <p class="why">${esc(cinema.error)}</p>
+        </div>`;
+  }
+
+  const note = cinema.failed.length
+    ? `\n        <div class="quiet">${esc(cinema.failed.join(" och "))} kunde inte läsas — listan är ofullständig.</div>`
+    : "";
+
+  if (!cinema.films.length) {
+    return `${note}
+        <div class="quiet">Inga visningar de närmaste sju dagarna.</div>`;
+  }
+
+  // The tail folds away in a <details>, which is the whole feature: no script,
+  // no state, and it still works if the CSS never loads. The section keeps its
+  // "top 5" claim above the fold and the rest is one tap away.
+  const top = cinema.films.slice(0, TOP_N);
+  const rest = cinema.films.slice(TOP_N);
+
+  return `${note}
+        <div class="films">${top.map(filmRow).join("")}
+        </div>${rest.length ? `
+        <details class="more">
+          <summary>${rest.length} till</summary>
+          <div class="films">${rest.map((f, i) => filmRow(f, i + TOP_N)).join("")}
+          </div>
+        </details>` : ""}`;
+}
+
 export function renderPage(opts: {
   today: string;
   view: EventsView;
   forecast: Forecast;
+  cinema: Cinema;
   fetchedAt: Date;
   error: string | null;
 }): string {
-  const { today, view, forecast, fetchedAt, error } = opts;
+  const { today, view, forecast, cinema, fetchedAt, error } = opts;
   const wxByDate = new Map(forecast.days.map((d) => [d.date, d]));
 
   return `<!doctype html>
@@ -221,12 +282,12 @@ ${eventsBody(view, error, wxByDate)}
     <div class="aside">
 
       <section class="card">
-        <h2>På bio</h2>
+        <h2><span>På bio</span> <span class="hint">mest visat i veckan</span></h2>
+${filmBody(cinema)}
         <div class="linkrow">
           <a class="chip" href="${LINKS.filmstaden}" target="_blank" rel="noopener">Filmstaden</a>
+          <a class="chip" href="${LINKS.nfbio}" target="_blank" rel="noopener">Nordisk Film Bio</a>
           <a class="chip" href="${LINKS.fyris}" target="_blank" rel="noopener">Fyrisbiografen</a>
-          <a class="chip" href="${LINKS.slotts}" target="_blank" rel="noopener">Slottsbiografen</a>
-          <a class="chip" href="${LINKS.regina}" target="_blank" rel="noopener">Bio Regina</a>
         </div>
       </section>
 
@@ -246,6 +307,8 @@ ${eventsBody(view, error, wxByDate)}
     Väderdata från <a href="${LINKS.smhiHome}" target="_blank" rel="noopener">SMHI</a>
     (<a href="${LINKS.ccby}" target="_blank" rel="noopener">CC BY 4.0</a>), bearbetad till dygnsvärden.
     Evenemang från <a href="${LINKS.heja}" target="_blank" rel="noopener">hejauppsala</a>.
+    Biotablå från <a href="${LINKS.nfbio}" target="_blank" rel="noopener">Nordisk Film Bio</a>
+    och <a href="${LINKS.fyris}" target="_blank" rel="noopener">Fyrisbiografen</a> — Filmstaden ingår inte.
   </footer>
 
 </div>

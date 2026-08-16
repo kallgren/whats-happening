@@ -34,19 +34,19 @@ specified. Progressive replacement is now literally true: there is a running ren
 remaining section is a link waiting to be swapped for data in it.
 
 That made two build tickets specifiable that were fog until then — they had no pipeline to land in.
-Both are pure execution with every decision already made. **The first of them has landed**:
-[12 — Weather strip](./issues/12-weather-strip.md) is resolved, so the header carries a real
-forecast and the page has no skeletons left anywhere.
-[13 — Top 5 on bio](./issues/13-films-top-five.md) is the remaining one, on the frontier.
-[09 — Data model](./issues/09-data-model.md) is unblocked too, though 11 has already
-answered a good part of it in code.
+Both are pure execution with every decision already made, and **both have now landed**:
+[12 — Weather strip](./issues/12-weather-strip.md) put a real forecast in the header, and
+[13 — Top 5 on bio](./issues/13-films-top-five.md) put the real film ranking in the sidebar.
 
-**Two of the three sections now hold real data.** After 13, every section that will ever hold data
-does — and the only tickets left are the two that write it down (09, 10).
+**Every section that will ever hold data now holds it.** The band card is link-outs by design and
+the Facebook link always was, so progressive replacement is finished: there is nothing left on the
+page standing in for data. The only tickets remaining are the two that write down what was built —
+[09 — Data model](./issues/09-data-model.md), now fully unblocked though 11 and 13 have answered
+much of it in code, and [10 — Assemble the v1 spec](./issues/10-write-v1-spec.md).
 
 **The question the map rests on is now Robert's to answer, not a ticket's**: whether the hub is
-useful enough to be worth finishing. One section of real data is on the page; living with it is
-the only way to find out.
+useful enough to be worth finishing. The whole page is real now; living with it is the only way to
+find out.
 
 **Domain**: personal event aggregation, Uppsala, Sweden. Single user (Robert). Swedish-language sources.
 
@@ -94,7 +94,8 @@ the only way to find out.
 
 - Events from **hejauppsala.com**, day-grouped, + link out to hejauppsala
 - **Weather**, coming 7 days as icons, from **SMHI** + link out to SMHI
-- **Top 5 films** now showing in Uppsala (ranked by number of showings this week) + link out to cinemas
+- **Top 5 films** now showing in Uppsala (ranked by number of showings this week), with films 6–10
+  behind a `<details>` fold, + one link out per operator
 - ~~**Band gigs** in Sweden for a configured artist list, via **Ticketmaster Discovery API**~~ —
   **cut from v1 by [08](./issues/08-build-pipeline.md)**; the card stays as link-outs. See *Out of scope*.
 - **Link out to Facebook Events** for manual browsing — no scraping
@@ -178,6 +179,20 @@ three questions with data, and the third with links.**
   rule to three tiers — events failed 60 s, weather-only 300 s, healthy an hour — since retrying
   every minute to fix a strip of icons would re-scrape hejauppsala sixty times an hour.
 
+- [13 — Upgrade "På bio" to the real top 5](./issues/13-films-top-five.md) — **the third and last
+  section is live**, and with it progressive replacement is finished. 02's research held up exactly.
+  Title matching across the two cinemas is **exact after normalising** — lowercase, strip
+  punctuation, collapse whitespace — and deliberately no fuzzier, since a bad merge fails invisibly;
+  it correctly folds *The Odyssey*'s 16 + 3 into 19. "This week" is a **rolling 7 days**, matching
+  the weather horizon rather than Fyrisbiografen's Friday–Thursday playing week, which would empty
+  every Thursday. The row is **rank + title + which cinema(s)** — the poster placeholder had nothing
+  to become and the count stays unprinted, as 02 required. **Films 6–10 fold into a `<details>`**,
+  which needs no script and is where the art-house titles turn out to live. Two sources means three
+  failure shapes: both dead empties the section, one dead still ranks above a line saying so, and
+  only nfbio gets an emptiness check because a thin Fyrisbiografen is normal. Amends 12's cache
+  tiers so *any* degraded section, not just weather, holds for 300 s. Also drops the v0 chips for
+  Slottsbiografen and Bio Regina — a rental hall and a theatre, neither showing films on a schedule.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -188,23 +203,33 @@ In scope, but not yet sharp enough to ticket:
   second half of each row's meta line. What is still open is whether genre earns anything *more* —
   a filter, a grouping, a quality signal. Now answerable from the live page rather than from data.
 
+- **Whether "på bio" needs to answer *idag* as well as *nuförtiden*.** Robert's third question was
+  *"Vilka filmer går på bio idag / nuförtiden?"*, and [13](./issues/13-films-top-five.md) answers
+  only the second half: a week's ranking says what is on in town, never what is on tonight. The
+  showtimes to answer *idag* are already parsed and thrown away, so this is cheap — but whether it
+  is wanted, and whether it belongs in the same card or replaces the ranking, only real use decides.
+
 - **Dismissal / "not interested".** Wanted eventually; needs client-side state on a static site
   (localStorage) and a stable per-event identity. Deferred until v1 is in real use, since the
   right shape depends on how noisy the feed actually turns out to be.
 - **Whether hejauppsala alone is enough.** Destination Uppsala, Uppsala City, kalender.se and
   uppsala.se all exist and are unexplored. Only worth surveying if v1 proves thin in practice.
 - **Whether the Filmstaden gap is big enough to matter in practice.** v1 ranks films on two of
-  Uppsala's cinemas, missing Luxe's 13 screens and Royal. Only visible once the top 5 is on the page
-  and Robert can tell whether it matches what is actually on in town. See
-  [02](./issues/02-filmstaden-showtimes.md).
+  Uppsala's cinemas, missing Luxe's 13 screens and Royal. See
+  [02](./issues/02-filmstaden-showtimes.md). **This is now checkable**:
+  [13](./issues/13-films-top-five.md) put the ranking on the page, so Robert can compare it against
+  what is actually on in town. The `<details>` fold makes the check cheaper than expected — ten
+  films is a wide enough net that a Filmstaden-only blockbuster missing entirely would be obvious.
 - **Whether the page ever needs a framework.** Deliberately deferred, not settled. v0 has no client
   state. The trigger to revisit is real interaction — dismissal, filters, view toggles — outgrowing
   vanilla JS, most likely during the LLM-ranking effort. Decide then, against real requirements.
 - **Whether the hub is useful enough to be worth finishing at all.** The one question the whole map
   rests on. [11](./issues/11-ongoing-events-and-day-slices.md) has now put it in front of Robert —
   real events, in the Spalter view, on the live page — but only use answers it, so it stays here
-  until it does. 12 and 13 are worth building either way; 09 and 10 are the ones that would be
-  wasted if the answer is no.
+  until it does. With [13](./issues/13-films-top-five.md) landed the question is now in front of
+  Robert **in full**: every section holds real data, so there is nothing left to build that would
+  make the page a fairer test. 09 and 10 are the only tickets that would be wasted if the answer
+  is no.
 - **Whether the second week of the horizon earns its keep.** 11 kept all 14 slices rather than
   cutting to 7, on the grounds that the far end is where plannable things live. That is a
   prediction about how Robert reads the page, and the page can now check it.

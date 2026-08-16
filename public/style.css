@@ -171,6 +171,55 @@ section.card { margin-bottom: 1rem; }
 .onc .title { font-weight: 500; font-size: .88rem; line-height: 1.25; }
 .onc .meta { color: var(--dim); font-size: .78rem; }
 
+/* --- på bio ---
+   Ticket 13. The prototype's film row had a rank, a poster placeholder and a
+   showing count. The poster is gone (no images in scope) and the count is gone
+   on purpose — Filmstaden is unreachable, so every count is an undercount and
+   only fit to sort by. The rank carries the claim on its own. */
+.films { display: flex; flex-direction: column; }
+.frow {
+  display: flex; gap: .6rem; align-items: baseline;
+  padding: .45rem 0; border-bottom: 1px solid var(--line);
+  text-decoration: none;
+}
+.frow:last-child { border-bottom: 0; }
+.frow:hover .title { color: var(--accent); }
+/* Big and pale: it orders the list without competing with the titles. */
+.frow .rank {
+  font-size: 1.1rem; font-weight: 600; color: var(--line);
+  font-variant-numeric: tabular-nums; min-width: 1.1rem; text-align: right;
+}
+.frow .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.frow .title { font-weight: 500; font-size: .9rem; line-height: 1.25; }
+.frow .meta { color: var(--dim); font-size: .78rem; }
+
+/* Films 6–10, folded. A <details> needs no script and degrades to an open list
+   if anything here fails to load, which is the same bargain the rest of the
+   page makes. The first row inside it keeps the hairline that the fifth row
+   above dropped, so the list reads as continuous once opened. */
+.more { margin-top: .1rem; }
+.more summary {
+  cursor: pointer; list-style: none;
+  color: var(--dim); font-size: .8rem; padding: .45rem 0;
+}
+.more summary::-webkit-details-marker { display: none; }
+.more summary::after { content: " ▾"; }
+.more[open] summary::after { content: " ▴"; }
+.more summary:hover { color: var(--accent); }
+.more .films { border-top: 1px solid var(--line); padding-top: .1rem; }
+
+/* The sidebar cards now have content above their chips, as the main column
+   already did. */
+.card .more + .linkrow,
+.card .films + .linkrow,
+.card .quiet + .linkrow,
+.card .failed + .linkrow { margin-top: .8rem; }
+
+/* The right-hand half of a section heading, when it is a caveat rather than a
+   link: "mest visat i veckan" is the section's whole claim, and it belongs
+   beside the title rather than in a line of its own. */
+h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; }
+
 /* --- horizontal day slices, desktop only --- */
 /* Below 60rem the columns fall back to the day-grouped list, so the card drops
    away too — the mobile story is a plain list and nothing else. */
