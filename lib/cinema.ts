@@ -56,6 +56,11 @@ export type Film = {
    * which is a real case here unlike ticket 14's events. Never a ranking input.
    */
   poster: string | null;
+  /**
+   * Minutes, from nfbio only — Fyrisbiografen publishes no runtime anywhere we
+   * read, so art-house rows simply have none. Null is normal, not a failure.
+   */
+  runtime: number | null;
 };
 
 export type Cinema = {
@@ -169,6 +174,40 @@ export function parseNfbioPosters(html: string): Map<string, string> {
   return out;
 }
 
+/**
+ * Runtime, also free from the schedule document. Genre and director are not:
+ * neither appears in any of the three pages we fetch, and getting them means a
+ * detail page per film — 83 KB each, against ~735 KB for the whole section
+ * today. That is the trade ticket 11 refused for hejauppsala and ticket 15's
+ * research refused for bigger posters, so runtime is what this takes.
+ *
+ * Each film prints its duration twice (once for the mobile layout, once for the
+ * desktop one), 186–235 characters after its title, 52 for 52 titles. The
+ * second write is the same value, so overwriting is harmless.
+ */
+export function parseNfbioRuntimes(html: string): Map<string, number> {
+  const out = new Map<string, number>();
+  const title = /field--name-title[^>]*>([^<]+)</gi;
+
+  let m: RegExpExecArray | null;
+  while ((m = title.exec(html))) {
+    // Same bounded-window rule as the posters, for the same reason: a layout
+    // change should drop runtimes, never hang one film's on another.
+    const d = /class="duration">([^<]*)</i.exec(html.slice(m.index, m.index + 600));
+    if (!d) continue;
+
+    // "2 timmar 20 min", "1 timme 42 min", "10 timmar" — the singular and the
+    // hours-only form both occur, so neither part is required.
+    const h = /(\d+)\s*timm/i.exec(d[1]);
+    const min = /(\d+)\s*min/i.exec(d[1]);
+    if (!h && !min) continue;
+
+    out.set(key(decodeEntities(m[1])), Number(h?.[1] ?? 0) * 60 + Number(min?.[1] ?? 0));
+  }
+
+  return out;
+}
+
 /** Only ever used when the title span moves; ugly, but it still ranks. */
 const humanise = (slug: string) =>
   slug.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
@@ -183,7 +222,11 @@ const decodeEntities = (s: string) =>
     .replace(/&#(\d+);/g, (_, d) => String.fromCharCode(Number(d)))
     .replace(/&[a-zA-Z]+;/g, (x) => ENTITIES[x] ?? x);
 
-async function fetchNfbio(): Promise<{ screenings: Screening[]; posters: Map<string, string> }> {
+async function fetchNfbio(): Promise<{
+  screenings: Screening[];
+  posters: Map<string, string>;
+  runtimes: Map<string, number>;
+}> {
   const res = await fetch(NFBIO_URL, { headers: { "user-agent": UA } });
   if (!res.ok) throw new Error(`nfbio svarade ${res.status}`);
   const html = await res.text();
@@ -203,7 +246,7 @@ async function fetchNfbio(): Promise<{ screenings: Screening[]; posters: Map<str
 
   // Posters ride along on a document already in hand, so they are never their
   // own failure here: if this parse finds nothing the schedule is still good.
-  return { screenings, posters: parseNfbioPosters(html) };
+  return { screenings, posters: parseNfbioPosters(html), runtimes: parseNfbioRuntimes(html) };
 }
 
 // --- Fyrisbiografen -----------------------------------------------------
@@ -324,6 +367,7 @@ export function rank(
   screenings: Screening[],
   today: string,
   posters: Posters = {},
+  runtimes: Map<string, number> = new Map(),
   topN = TOP_N + EXTRA_N,
 ): Film[] {
   const horizon = addDays(today, FILM_WINDOW_DAYS - 1);
@@ -362,7 +406,10 @@ export function rank(
       const poster =
         [main, ...cinemas].map((c) => posters[c]?.get(k)).find(Boolean) ?? null;
 
-      return { title: g.at[main]!.title, url: g.at[main]!.url, cinemas, count: g.count, poster };
+      return {
+        title: g.at[main]!.title, url: g.at[main]!.url, cinemas, count: g.count,
+        poster, runtime: runtimes.get(k) ?? null,
+      };
     })
     .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, "sv"))
     .slice(0, topN);
@@ -385,22 +432,30 @@ export async function fetchFilms(today: string): Promise<Cinema> {
 
   const failed = [...a.failed, ...b.failed];
   return {
-    films: rank([...a.screenings, ...b.screenings], today, {
-      nfbio: a.posters,
-      fyris: fyrisPosters,
-    }),
+    films: rank(
+      [...a.screenings, ...b.screenings],
+      today,
+      { nfbio: a.posters, fyris: fyrisPosters },
+      a.runtimes,
+    ),
     failed,
     error: failed.length === 2 ? "båda biograferna kunde inte läsas" : null,
   };
 }
 
-const ok = (r: { screenings: Screening[]; posters?: Map<string, string> }) => ({
+const ok = (r: {
+  screenings: Screening[];
+  posters?: Map<string, string>;
+  runtimes?: Map<string, number>;
+}) => ({
   screenings: r.screenings,
   posters: r.posters ?? new Map<string, string>(),
+  runtimes: r.runtimes ?? new Map<string, number>(),
   failed: [] as string[],
 });
 const fail = (id: CinemaId) => ({
   screenings: [] as Screening[],
   posters: new Map<string, string>(),
+  runtimes: new Map<string, number>(),
   failed: [CINEMA_NAME[id]],
 });

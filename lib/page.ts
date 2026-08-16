@@ -209,12 +209,29 @@ const poster = (f: Film) =>
     ? `<img class="poster" src="${esc(f.poster)}" alt="" loading="lazy" decoding="async">`
     : `<span class="poster"></span>`;
 
+/**
+ * A line of its own, under the cinemas. Both facts are meta, but they answer
+ * different questions — *where can I see it* and *how long is it* — and running
+ * them together on one line pushed the two-cinema rows ("Nordisk Film Bio ·
+ * Fyrisbiografen · 172 min") into a wrap inside the 20rem sidebar, which read
+ * as one long muddled string rather than as two facts.
+ *
+ * Minutes, not "2 timmar 20 min": a runtime is a number you compare, not a
+ * sentence you read, and the short form fits the column without wrapping.
+ *
+ * Genre and director are not here: nfbio publishes them only on its per-film
+ * detail pages, at 83 KB each against ~735 KB for the whole section, and
+ * Fyrisbiografen publishes them nowhere we read.
+ */
+const duration = (f: Film) =>
+  f.runtime ? `\n              <span class="meta">${esc(f.runtime)} min</span>` : "";
+
 const filmRow = (f: Film, i: number) => `
           <a class="frow" href="${esc(f.url)}" target="_blank" rel="noopener">
             <span class="rank">${i + 1}</span>${poster(f)}
             <span class="body">
               <span class="title">${esc(f.title)}</span>
-              <span class="meta">${f.cinemas.map((c) => esc(CINEMA_NAME[c])).join(" · ")}</span>
+              <span class="meta">${f.cinemas.map((c) => esc(CINEMA_NAME[c])).join(" · ")}</span>${duration(f)}
             </span>
           </a>`;
 
