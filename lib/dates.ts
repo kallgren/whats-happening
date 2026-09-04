@@ -46,3 +46,7 @@ export function longDate(isoDate: string): string {
 export function clockInUppsala(d: Date): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: TZ, hour: "2-digit", minute: "2-digit" }).format(d);
 }
+
+/** Saturday or Sunday — the weather strip tints those two cells. Parsed at noon
+    UTC, so the UTC weekday is the Uppsala weekday. */
+export const isWeekend = (isoDate: string) => [0, 6].includes(at(isoDate).getUTCDay());

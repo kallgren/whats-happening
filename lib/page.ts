@@ -13,7 +13,7 @@ import type { DayForecast, Forecast } from "./smhi.js";
 import type { Cinema, Film } from "./cinema.js";
 import { CINEMA_NAME, TOP_N } from "./cinema.js";
 import { weatherEmoji, weatherLabel } from "./smhi.js";
-import { clockInUppsala, dayMonth, longDate, weekdayLong, weekdayShort } from "./dates.js";
+import { clockInUppsala, dayMonth, isWeekend, longDate, weekdayLong, weekdayShort } from "./dates.js";
 
 export const esc = (s: unknown): string =>
   String(s ?? "")
@@ -94,9 +94,10 @@ const glyph = (d: DayForecast) =>
 /** "Halvklart, 12–21°" — the precision the icon and the single number drop. */
 const reading = (d: DayForecast) => `${weatherLabel(d.symbolCode)}, ${d.tmin}–${d.tmax}°`;
 
-/** One cell: icon, the day's high, and the day's name. */
+/** One cell: icon, the day's high, and the day's name. Weekend cells get a warm
+    tint, so "is that on a Saturday?" is answered by scanning rather than reading. */
 const wxCell = (d: DayForecast, offset: number) => `
-          <div title="${esc(reading(d))}">
+          <div class="${isWeekend(d.date) ? "we" : ""}" title="${esc(reading(d))}">
             <span class="ic">${glyph(d)}</span>
             <span class="t">${esc(d.tmax)}°</span>
             <span class="dn">${esc(offset === 0 ? "idag" : weekdayShort(d.date))}</span>
