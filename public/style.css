@@ -320,13 +320,15 @@ h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; }
 
 /* --- the hotkey hint ---
    Network v1, ticket 01. `n` goes to the notes page and `h` comes back, and an
-   invisible-only hotkey is one you forget you built — so each page says so in
-   its footer.
+   invisible-only hotkey is one you forget you built — so the hub says so in its
+   footer. The hint is also the link, deliberately: a phone has no keyboard to
+   press `n` on, and a page reachable only by typing its URL is a page that does
+   not exist.
 
-   The hint is also the link, deliberately. The map cut the switcher UI from the
-   MVP, but a phone has no keyboard to press `n` on, and a page reachable only
-   by typing its URL is a page that does not exist. This is the smallest thing
-   that keeps both pages reachable without becoming a switcher. */
+   Only the hub carries it now. /network dropped its footer — the sole reader
+   knows both the hotkey and the localStorage caveat and did not want the
+   reminder — so these rules are the hub's alone, and the return trip is `h` or
+   the back button. */
 .pagefoot .hotkey {
   margin: 0 0 .5rem;
   font-size: .8rem;

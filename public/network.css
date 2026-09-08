@@ -1,6 +1,7 @@
 /* The Network page, on top of the hub's style.css — which supplies the custom
-   properties, the typography, .wrap, .pagehead, .quiet and .pagefoot. Only what
-   is specific to the notes grid belongs here.
+   properties, the typography, .wrap, .pagehead and .quiet. (Not .pagefoot —
+   this page has no footer.) Only what is specific to the notes grid belongs
+   here.
 
    Ticket 01 ships the grid empty. Ticket 02 puts cards in it, 04 makes them
    draggable. */
@@ -22,6 +23,14 @@
   gap: .75rem;
   align-items: start;
 }
+
+/* --- the header band --- */
+
+/* The hub's h1 carries a .15rem bottom margin to clear the .sub line beneath
+   it. This page has no subtitle, so that margin is just a gap that lifts the
+   title off the export/import buttons it shares the flex-end baseline with —
+   zero it here rather than in the shared sheet, which still needs it. */
+.pagehead h1 { margin-bottom: 0; }
 
 /* --- the notes themselves (ticket 02) --- */
 
@@ -137,9 +146,9 @@
 /* --- export and import (ticket 05) --- */
 
 /* The header band is already a space-between flex row with one child, so the
-   two buttons need no layout of their own beyond sitting in a row. They align
-   to the baseline of the subtitle rather than the h1 — .pagehead ends flex-end
-   — which is what stops them looking like a toolbar bolted above the grid. */
+   two buttons need no layout of their own beyond sitting in a row. .pagehead
+   ends flex-end, so they sit on the h1's baseline rather than floating above
+   it — which is what stops them looking like a toolbar bolted onto the grid. */
 .ph-acts { display: flex; gap: .4rem; flex: 0 0 auto; }
 
 /* Shaped like the hub's .chip, because that is what a small secondary action
