@@ -36,6 +36,19 @@
       <h1>Nätverk</h1>
       <p class="sub">Anteckningar — sparade bara i den här webbläsaren</p>
     </div>
+
+    <!-- Ticket 05. In the header rather than beside the grid, and that is not
+         only layout: when the store is corrupt the grid is hidden and these two
+         are the only things left that can help. Export is then the rescue — it
+         writes the damaged bytes to a file before anything touches them — and
+         import is the recovery. Both stay live while the page is frozen. -->
+    <div class="ph-acts">
+      <button type="button" class="act" id="export">Exportera</button>
+      <button type="button" class="act" id="import">Importera</button>
+      <!-- The real file picker. A button opens it, because a bare file input
+           cannot be styled and reads as a form field on a page that has none. -->
+      <input type="file" id="importfile" accept="application/json,.json" hidden>
+    </div>
   </header>
 
   <!-- Ticket 02. The banner stands *above* the grid rather than inside it:
@@ -54,7 +67,8 @@
 
   <footer class="pagefoot">
     <p class="hotkey"><a href="/">Vad händer</a> — eller tryck <kbd>h</kbd></p>
-    Anteckningarna finns bara i den här webbläsaren. Rensar du webbplatsdata försvinner de.
+    Anteckningarna finns bara i den här webbläsaren. Rensar du webbplatsdata försvinner de —
+    exportera därför med jämna mellanrum.
   </footer>
 
 </div>

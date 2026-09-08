@@ -65,6 +65,64 @@ function migrate(doc) {
 }
 
 /**
+ * Read a document out of text: the single definition of what this page is
+ * willing to accept.
+ *
+ * Split out of `load` for ticket 05's import, and that split is the point — an
+ * importer carrying its own validator is a second opinion about what a valid
+ * document is, and two opinions drift. An imported file passes exactly the
+ * checks a reload passes, so a file the page accepts is a file the page can
+ * re-open.
+ *
+ * Returns `{ ok: true, notes }` or `{ ok: false, reason }`. The caller supplies
+ * the context: `load` attaches the raw bytes, the importer names the file.
+ *
+ * Note what it does *not* do: it never repairs, and it never keeps the parts it
+ * did understand. A document is accepted whole or refused whole — a
+ * half-applied read is the failure that looks like success.
+ */
+export function parse(text) {
+  let doc;
+  try {
+    doc = JSON.parse(text);
+  } catch (e) {
+    return { ok: false, reason: "Innehållet är inte giltig JSON." };
+  }
+
+  if (!doc || typeof doc !== "object" || !Number.isInteger(doc.version) || !Array.isArray(doc.notes)) {
+    return { ok: false, reason: "Innehållet har fel form." };
+  }
+
+  const migrated = migrate(doc);
+  if (!migrated) {
+    return {
+      ok: false,
+      reason: doc.version > VERSION
+        ? `Sparat av en nyare version (${doc.version}) än den här sidan förstår (${VERSION}).`
+        : `Okänd version: ${doc.version}.`,
+    };
+  }
+
+  if (!migrated.notes.every(isNote)) {
+    return { ok: false, reason: "En eller flera anteckningar har fel form." };
+  }
+
+  /* Ids are identity — see newId, which says so precisely because position is
+     the user's ordering and therefore cannot also be identity. Two notes
+     sharing an id is not a cosmetic flaw: the next lookup by id finds one of
+     them twice and the other never, which reorders a note away and silently
+     drops its twin. Unreachable through this page's own writes; reachable the
+     moment a file arrives, because a hand-edited backup, or two exports someone
+     tried to merge with a text editor, is exactly how it happens. */
+  const ids = new Set(migrated.notes.map((n) => n.id));
+  if (ids.size !== migrated.notes.length) {
+    return { ok: false, reason: "Två anteckningar har samma id." };
+  }
+
+  return { ok: true, notes: migrated.notes };
+}
+
+/**
  * Read the store.
  *
  * Returns `{ ok: true, notes }`, or `{ ok: false, reason, raw }` when the
@@ -86,33 +144,11 @@ export function load() {
 
   if (raw === null) return { ok: true, notes: [] };
 
-  let doc;
-  try {
-    doc = JSON.parse(raw);
-  } catch (e) {
-    return { ok: false, reason: "Det sparade innehållet är inte giltig JSON.", raw };
-  }
-
-  if (!doc || typeof doc !== "object" || !Number.isInteger(doc.version) || !Array.isArray(doc.notes)) {
-    return { ok: false, reason: "Det sparade innehållet har fel form.", raw };
-  }
-
-  const migrated = migrate(doc);
-  if (!migrated) {
-    return {
-      ok: false,
-      reason: doc.version > VERSION
-        ? `Sparat av en nyare version (${doc.version}) än den här sidan förstår (${VERSION}).`
-        : `Okänd version: ${doc.version}.`,
-      raw,
-    };
-  }
-
-  if (!migrated.notes.every(isNote)) {
-    return { ok: false, reason: "En eller flera anteckningar har fel form.", raw };
-  }
-
-  return { ok: true, notes: migrated.notes };
+  const read = parse(raw);
+  // The raw bytes ride along on failure and only on failure: they are the
+  // recovery path — the banner prints them and the export saves them — and
+  // there is nothing to recover from a document that read cleanly.
+  return read.ok ? read : { ...read, raw };
 }
 
 /**

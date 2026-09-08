@@ -145,6 +145,23 @@ chrome is Swedish; the Network page follows.
   trusted input against `vercel dev`, where dragging the strip reorders and dragging the text selects
   it. **One gap it leaves: no keyboard reorder**, now in *Not yet specified*. Not deployed.
 
+- [05 — Export and import](./issues/05-export-and-import.md) — the notes can leave the browser and
+  come back: export writes the store's **own bytes** (`rawText()`, so the file *is* the store — a
+  byte-exact round trip, and a document too broken to parse can still be saved), import replaces
+  everything behind a confirm that counts what it destroys. The shape decision is that import
+  validates through the store's own rules: `load()`'s checks were extracted into an exported
+  `parse(text)` that both callers share, because an importer with its own validator is a second
+  opinion about what a valid document is, and two opinions drift. Order is validate → confirm →
+  write → adopt, so a bad file costs a dialog nobody sees and there is no half-applied state. Two
+  things it changes beyond its own scope: **import is now the way out of a frozen page** — both
+  buttons stay live while [02](./issues/02-notes-store-and-inline-editing.md)'s corrupt-store freeze
+  is up, making export the rescue and import the recovery, which is why they sit in the header and
+  why `enableDragging()` had to become idempotent; and **duplicate ids are now refused** on load as
+  well as import, a silent-loss path reachable only through a hand-edited or hand-merged file.
+  Unknown fields on a note are deliberately kept rather than stripped. Verified with 51 headless
+  Chrome checks run against both a static server and `vercel dev`, plus 19 node checks on the store.
+  Not deployed — that is [06](./issues/06-prod-deploy.md).
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -178,6 +195,13 @@ In scope, but not yet sharp enough to ticket:
   the shape depends on answers nobody has: a single-user page on one desktop browser may never need
   it, and if it does, "move up / move down" on the focused card and a full keyboard drag are very
   different builds. Revisit alongside mobile, which is the other input question.
+- **Whether the backup habit needs a nudge.** [05](./issues/05-export-and-import.md) built export
+  and import, and the map calls them *a backup habit, not a feature* — but nothing on the page says
+  when Robert last exported, so the whole protection rests on him remembering unprompted. Not sharp
+  enough to ticket: the shape depends on how he actually uses the page, and the options are very
+  different builds (a date in the footer, a nudge after N changes, an automatic download). Cheapest
+  first look is whether he has exported at all a fortnight after the deploy — if he has, there is
+  nothing to build.
 - **Whether the hotkey wants company.** The switcher was cut from the MVP, not rejected. If the app
   ever has a third page the hotkey stops scaling, and that is when to look at it.
 - **Whether the hub and Network should share more than CSS.** Right now they share a stylesheet and

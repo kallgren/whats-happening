@@ -9,7 +9,7 @@
  * the DOM is parsed by the time anything here runs.
  */
 
-import { load, save, newNote, rawText } from "/store.js";
+import { load, parse, save, newNote, rawText } from "/store.js";
 
 /* ==================================================================== HOTKEY */
 
@@ -119,6 +119,26 @@ function fail(reason, raw) {
 
   grid.hidden = true;
   emptyHint.hidden = true;
+}
+
+/**
+ * The way back out of `fail`, and the only one.
+ *
+ * There is exactly one thing that can honestly clear a freeze: a whole, valid
+ * document arriving to replace the unreadable one — which is a successful
+ * import and nothing else. Notably *not* a retry button: rereading the same
+ * bytes gives the same answer, so a page that offers to try again is offering
+ * to fail again.
+ *
+ * Undoes `fail` completely rather than partly. A banner left standing over a
+ * working grid, or a `frozen` still true under one, is a page lying in the
+ * other direction.
+ */
+function unfreeze() {
+  frozen = false;
+  banner.hidden = true;
+  banner.innerHTML = "";
+  grid.hidden = false;
 }
 
 /* --- saving ---
@@ -389,8 +409,15 @@ grid.addEventListener("click", (e) => {
    selecting and everything else on the card — the top strip, the padding — is
    for grabbing. That split comes for free, which is the finding ticket 03 was
    written to establish. The CSS only has to say so with a cursor. */
+let sortable = null;
+
 function enableDragging() {
-  Sortable.create(grid, {
+  // Guarded because there are now two ways in: the normal load, and a recovery
+  // import that mounts a grid the failed load never mounted (see unfreeze). A
+  // second Sortable over the same element binds a second set of listeners and
+  // saves the order twice per drop.
+  if (sortable) return;
+  sortable = Sortable.create(grid, {
     draggable: ".note",
     animation: 150,
     onUpdate: saveOrder,
@@ -438,6 +465,167 @@ function saveOrder() {
   dirty = true;
   flush();
 }
+
+/* --- export and import (ticket 05) --- */
+
+/* The notes live in one browser and nowhere else, and clearing site data
+   destroys them with no warning and no undo. These two buttons are the only
+   protection they have — a backup habit, not a sync feature; the map is
+   explicit that following Robert to his phone is a different question and out
+   of this effort's scope.
+
+   Both stay live while the page is frozen, which is the opposite of every other
+   control here. That is deliberate and it is the point: a corrupt store is
+   exactly when a copy of the bytes matters most, and importing a good backup
+   over a broken document is the only recovery this page can offer. The freeze
+   exists to stop *incidental* writes — a keystroke, a debounce — not a
+   deliberate, confirmed replacement. */
+
+const exportButton = document.getElementById("export");
+const importButton = document.getElementById("import");
+const filePicker = document.getElementById("importfile");
+
+/** Swedish declines the noun, so a bare `${n} anteckningar` reads as broken the
+    one time it matters most — the confirm dialog standing in front of a
+    destructive act. */
+function countNotes(n) {
+  return n === 1 ? "1 anteckning" : `${n} anteckningar`;
+}
+
+/** Local time, not UTC: this name is read by a human deciding which of two
+    files is the newer one, and the answer has to match the clock on his wall.
+    Minutes, not just the date, because the ticket asks that successive backups
+    not collide and "twice on the same afternoon" is the normal case for a
+    habit — a browser resolving that with "(1)" leaves two files whose order is
+    guesswork. ASCII throughout; a filename is not the place to find out how a
+    filesystem feels about "ä". */
+function stamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+}
+
+/**
+ * Save `text` as `name`.
+ *
+ * An <a download> clicked and thrown away, which is the whole of the platform's
+ * "hand the user a file" story. The object URL is revoked on the next turn of
+ * the loop rather than immediately: the click only *starts* the download, and
+ * revoking in the same tick has historically raced it.
+ */
+function download(name, text) {
+  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+/**
+ * Export: the store's own bytes, verbatim.
+ *
+ * `rawText()` rather than a re-serialisation of `notes`, so the file *is* the
+ * store rather than this page's opinion of it. Three things follow from that,
+ * and all three are the reason for it: the round trip is byte-exact, an
+ * unreadable document can still be saved (there is nothing to serialise from —
+ * `notes` is empty when frozen), and the export cannot invent a document that
+ * was never stored.
+ *
+ * `flush()` first, because the debounce means the last word typed may still be
+ * 300 ms away from disk, and a backup missing the thing you just wrote is a
+ * backup that has quietly failed at its one job.
+ */
+function exportStore() {
+  flush();
+
+  const text = rawText();
+  if (text === null) {
+    // No key at all: a browser that has never held a note, or one that refuses
+    // storage. Writing an empty document to a file would be worse than saying
+    // so — it is a live grenade, indistinguishable later from a real backup and
+    // capable of wiping a real store on import.
+    alert("Det finns inget att exportera ännu.");
+    return;
+  }
+
+  download(`natverk-${stamp()}.json`, text);
+}
+
+/**
+ * Import: replace everything, or change nothing.
+ *
+ * Replace rather than merge, per the map — merging needs conflict rules that
+ * cannot be written before there are two devices to conflict, and inventing
+ * them now would be inventing a sync feature nobody has asked for. Replacing is
+ * the honest MVP semantic, and the confirm says so in those words.
+ *
+ * The order below is the substance: **validate, then confirm, then write.** The
+ * file is checked against `parse` — the same rules a reload runs, so anything
+ * accepted here is re-openable — before Robert is asked anything, so a bad file
+ * costs a dialog he never sees rather than a "replace everything?" he answers
+ * yes to and then loses to a syntax error. And the write is one `setItem` of a
+ * fully-built document: it either lands or leaves the old value alone. There is
+ * no state in which half a file has been applied.
+ */
+async function importFile(file) {
+  let text;
+  try {
+    text = await file.text();
+  } catch (e) {
+    alert("Filen kunde inte läsas. Inget har ändrats.");
+    return;
+  }
+
+  const read = parse(text);
+  if (!read.ok) {
+    alert(`Filen kunde inte importeras: ${read.reason}\n\nInget har ändrats.`);
+    return;
+  }
+
+  // What is at stake differs, so the question does. Frozen, the current
+  // document is unreadable and its worth is unknown — the honest warning is
+  // that the bytes on screen are about to go, and that Exportera is how to keep
+  // them. Otherwise the cost is countable, so count it.
+  const what = frozen
+    ? `Importera ${countNotes(read.notes.length)}?\n\nDet skadade innehåll som visas på sidan skrivs över. Vill du behålla det, avbryt och tryck Exportera först.`
+    : `Importera ${countNotes(read.notes.length)}?\n\nAlla ${countNotes(notes.length)} som finns här nu tas bort. Det går inte att ångra.`;
+  if (!confirm(what)) return;
+
+  if (!save(read.notes)) {
+    fail("Webbläsaren vägrade spara — lagringen kan vara full.", rawText());
+    return;
+  }
+
+  // Only now is the model allowed to move: everything above could still have
+  // backed out, and a `notes` that no longer matches what is on disk is the one
+  // inconsistency this page has no way to notice.
+  notes = read.notes;
+  if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+  dirty = false;
+
+  // Ordered: unfreeze before mount, because the empty hint asks whether the
+  // page is frozen. A no-op on the ordinary path, and the recovery on the
+  // frozen one — where this is also the first time the grid is built at all,
+  // which is why enableDragging has to be idempotent.
+  unfreeze();
+  mount();
+  enableDragging();
+}
+
+exportButton.addEventListener("click", exportStore);
+
+importButton.addEventListener("click", () => filePicker.click());
+
+filePicker.addEventListener("change", () => {
+  const file = filePicker.files && filePicker.files[0];
+  // Cleared unconditionally and up front: the input keeps its value, so picking
+  // the same file twice — the obvious thing to do after cancelling the confirm
+  // — fires no second `change` unless this is reset. Before the await, so the
+  // reset cannot be skipped by an early return further down.
+  filePicker.value = "";
+  if (file) importFile(file);
+});
 
 /* --- start --- */
 
