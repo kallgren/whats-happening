@@ -91,13 +91,13 @@ chrome is Swedish; the Network page follows.
 
 <!-- one line per closed ticket: gist + link -->
 
-- **03** — Drag-and-drop is **SortableJS 1.15.7**, vendored as `public/sortable.min.js` (45 KB, MIT,
-  UMD, no bundler). No drag handle needed: Sortable already refuses to start a drag from a
+- [03 — Drag-and-drop for a grid of contenteditable cards](./issues/03-drag-and-drop-research.md) —
+  drag-and-drop is **SortableJS 1.15.7**, vendored as `public/sortable.min.js` (45 KB, MIT, UMD,
+  no bundler). No drag handle needed: Sortable already refuses to start a drag from a
   `contenteditable` target, so editing and dragging don't fight — each card just needs a
   non-editable strip to grab. Persist on `onUpdate`, reading order back off the DOM. Native HTML5
-  DnD was judged genuinely close but loses on touch and on owning the grid-insertion logic.
-  [03-drag-and-drop-research.md](./issues/03-drag-and-drop-research.md) ·
-  [research](./research/03-drag-and-drop.md)
+  DnD was judged genuinely close but loses on touch and on owning the grid-insertion logic. Full
+  findings: [research/03-drag-and-drop.md](./research/03-drag-and-drop.md).
 
 ## Not yet specified
 
