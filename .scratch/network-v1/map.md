@@ -132,6 +132,19 @@ chrome is Swedish; the Network page follows.
   `store.js` already exposes `rawText()`, which is most of 05's export. Verified with 29 headless
   Chrome checks over CDP plus 13 node checks on the store's failure modes. Not deployed.
 
+- [04 — Reorder the grid by drag and drop](./issues/04-reorder-by-drag.md) — the grid reorders and
+  the order is in the store. SortableJS 1.15.7 is vendored at `public/sortable.min.js`, byte-identical
+  to what [03](./issues/03-drag-and-drop-research.md) vetted, with its sha256 recorded beside it.
+  Two options and no more — `draggable: ".note"` keeps the "+" tile out of the drag, `onUpdate`
+  writes; **no `handle` and no `filter`**, because Sortable's own `contenteditable` guard already
+  splits grabbing the card from selecting its text. `saveOrder()` reads the new order off the DOM
+  rather than reconstructing it from indices, so the store never learns the library's name, and
+  re-appends the "+" tile — `draggable` stops the tile being dragged but not a card being dropped
+  past it. Verified twice over, because one harness could not cover both: 22 headless checks through
+  Sortable's fallback transport, then the **native** path — the one that actually ships — driven with
+  trusted input against `vercel dev`, where dragging the strip reorders and dragging the text selects
+  it. **One gap it leaves: no keyboard reorder**, now in *Not yet specified*. Not deployed.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -159,6 +172,12 @@ In scope, but not yet sharp enough to ticket:
   position, and it may well engage in a clean profile or on the phone — but nobody has watched it
   work. Worth five minutes in plain Chrome and in Safari on the phone once the feature is deployed;
   if it never engages anywhere, delete it and keep the header.
+- **Whether reordering needs a keyboard path.** [04](./issues/04-reorder-by-drag.md) shipped drag
+  only: a card can be moved by pointer or touch and by nothing else, so ordering — which the map
+  calls the information itself — is unreachable without a mouse. Not sharp enough to ticket because
+  the shape depends on answers nobody has: a single-user page on one desktop browser may never need
+  it, and if it does, "move up / move down" on the focused card and a full keyboard drag are very
+  different builds. Revisit alongside mobile, which is the other input question.
 - **Whether the hotkey wants company.** The switcher was cut from the MVP, not rejected. If the app
   ever has a third page the hotkey stops scaling, and that is when to look at it.
 - **Whether the hub and Network should share more than CSS.** Right now they share a stylesheet and

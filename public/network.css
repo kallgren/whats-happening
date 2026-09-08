@@ -35,7 +35,19 @@
   padding: .35rem .75rem .7rem;
   display: flex; flex-direction: column;
   max-height: 16rem;
+  /* Every non-editable pixel of the card is a drag surface — Sortable refuses
+     to start a drag from contenteditable text, so the split is the card's own
+     chrome vs. its text, not a designated handle. Saying "grab" here and
+     "text" on the two editable regions below is what makes that visible. */
+  cursor: grab;
 }
+.note-title, .note-body { cursor: text; }
+/* Sortable's own transient classes: the card under the cursor while it is being
+   carried, and the gap it will land in. The ghost is the placeholder — dimmed
+   and outlined in the accent so the drop target is obvious without moving
+   anything else on the page. */
+.note.sortable-chosen { cursor: grabbing; }
+.note.sortable-ghost { opacity: .35; border-color: var(--accent); }
 .note:hover { border-color: #d6d2cb; }
 /* The focused card grows in place to fit its content and collapses back on
    blur. Editing a long list through a 16rem window is the failure mode this
@@ -44,9 +56,9 @@
 .note:focus-within { max-height: none; border-color: var(--accent); }
 
 /* The non-editable strip along the top. It exists for two reasons: it carries
-   the delete button, and it is the only part of the card that is not
-   contenteditable — which is what ticket 04 needs to start a drag from, since
-   SortableJS (correctly) refuses to drag a contenteditable target. */
+   the delete button, and it is the widest part of the card that is not
+   contenteditable — which is what the drag starts from, since SortableJS
+   (correctly) refuses to drag a contenteditable target. */
 .note-bar {
   display: flex; justify-content: flex-end; align-items: center;
   height: 1.1rem; margin-bottom: .1rem; flex: 0 0 auto;

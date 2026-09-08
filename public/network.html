@@ -59,6 +59,18 @@
 
 </div>
 
+<!-- SortableJS 1.15.7, MIT, vendored verbatim from the 1.15.7 git tag (ticket
+     03). Not a CDN and not npm: this page has no build step and must not gain a
+     runtime dependency on a third-party host. The UMD build defines
+     window.Sortable from an ordinary script tag, which is why it and not the
+     ESM build — upstream ships no minified ESM. Its sha256 is recorded beside
+     it; verify with `shasum -a 256 -c public/sortable.min.js.sha256` so a
+     future bump is a diff rather than an act of faith.
+
+     Classic, not deferred: it runs while the document is parsed, so
+     window.Sortable is there by the time the module below runs. -->
+<script src="/sortable.min.js"></script>
+
 <!-- A module, so store.js can be a separate file with no build step. Modules
      are deferred, so the DOM is parsed before anything in it runs. -->
 <script type="module" src="/network.js"></script>

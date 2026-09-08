@@ -76,8 +76,8 @@ const grid = document.getElementById("notes");
 const emptyHint = document.getElementById("empty");
 const banner = document.getElementById("trouble");
 
-/** The live document. Array order is the user's order (ticket 04 reorders it);
-    this array is what gets written verbatim on every save. */
+/** The live document. Array order is the user's order — set by dragging, see
+    saveOrder — and this array is what gets written verbatim on every save. */
 let notes = [];
 
 /** Set when the page must not write: a corrupt load, or a failed save. The
@@ -372,12 +372,80 @@ grid.addEventListener("click", (e) => {
   flush();
 });
 
+/* --- reordering (ticket 04) --- */
+
+/* SortableJS, vendored into public/ and loaded as a plain script before this
+   module — window.Sortable, no import. See the <script> comment in
+   network.html and research/03-drag-and-drop.md.
+
+   Two options and no more:
+
+   `draggable: ".note"` keeps the "+" tile out of the drag. It is the last cell
+   of the grid rather than a note, and a tile you can shuffle into the middle
+   would read as one.
+
+   No `handle`, and none is needed: Sortable refuses outright to start a drag
+   whose mousedown landed on a contenteditable target, so the note text is for
+   selecting and everything else on the card — the top strip, the padding — is
+   for grabbing. That split comes for free, which is the finding ticket 03 was
+   written to establish. The CSS only has to say so with a cursor. */
+function enableDragging() {
+  Sortable.create(grid, {
+    draggable: ".note",
+    animation: 150,
+    onUpdate: saveOrder,
+  });
+}
+
+/**
+ * Persist the order the drag just produced.
+ *
+ * The DOM is read back as the record of the new order rather than the
+ * `oldIndex`/`newIndex` Sortable hands us: reconstructing the array from a pair
+ * of indices is arithmetic we would get to write and get wrong, and the grid
+ * already holds the answer. Read straight off `dataset.id` rather than through
+ * `sortable.toArray()` so the store stays independent of the library.
+ *
+ * The array *is* the order — see the store's note on ids being identity
+ * precisely because position is not — so this reorders `notes` in place and
+ * saves the whole document, the same write every other mutation makes.
+ */
+function saveOrder() {
+  if (frozen) return;
+
+  const byId = new Map(notes.map((n) => [n.id, n]));
+  const reordered = [];
+  for (const card of grid.querySelectorAll(".note")) {
+    const note = byId.get(card.dataset.id);
+    // A card with no note behind it should be impossible; dropping it silently
+    // would quietly delete a note, so leave the model alone and say nothing was
+    // reordered rather than write a document we cannot account for.
+    if (!note) return;
+    reordered.push(note);
+  }
+  if (reordered.length !== notes.length) return;
+
+  notes = reordered;
+
+  // Sortable can drop a card past the "+" tile even though the tile itself is
+  // not draggable. The model above is already right either way, but the tile
+  // must go back to being the last cell or it stops reading as the next empty
+  // slot.
+  grid.append(addTile);
+
+  // Not `touch()`: a drop is a finished gesture, not a keystroke mid-word, so
+  // there is nothing to debounce.
+  dirty = true;
+  flush();
+}
+
 /* --- start --- */
 
 const opened = load();
 if (opened.ok) {
   notes = opened.notes;
   mount();
+  enableDragging();
 } else {
   fail(opened.reason, opened.raw);
 }
