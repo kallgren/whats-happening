@@ -68,12 +68,19 @@ chrome is Swedish; the Network page follows.
   before there are two devices.
 - **Structure is deferred on purpose.** Plain text, newlines preserved. A list of people is just
   lines. Lines can become anything later; a schema can't.
-- **Prod deploy is one gate at the end, not per ticket.** Changed by Robert while testing 01:
+- **Prod deploy was one gate at the end, not per ticket.** Changed by Robert while testing 01:
   *"no prod deploy until I've tested it myself. we'll probably do prod deploy when the whole feature
-  is in place."* Tickets are done when they work against `vercel dev` and Robert has looked; the
-  destination's "live and in daily use" is reached in one deploy once 02–05 are in. Run the dev
+  is in place."* Tickets were done when they worked against `vercel dev` and Robert had looked; the
+  destination's "live and in daily use" was reached in one deploy once 02–07 were in. Run the dev
   server with **`npm start`** — the `dev` script could never work, since `vercel dev` refuses to
   start when it finds itself in the package's `dev` script.
+- **The gate is closed, and from here on prod deploys happen by `git push`.** Found while resolving
+  [06](./issues/06-prod-deploy.md): the Vercel project is git-connected to
+  `github.com/kallgren/whats-happening` with `productionBranch: "main"`, so a push to `main` deploys
+  to production by itself. It had never fired only because `main` had never been pushed — the whole
+  effort sat ten commits ahead of `origin`. **Push; do not reach for `vercel --prod`.** The CLI keeps
+  one narrow use, deploying the working tree rather than a commit, which is rarely what is wanted and
+  leaves prod serving code that exists in no repository.
 - **In-line editing means in-line.** No modal, no detail view. The focused card grows in place to
   fit its content and collapses back on blur.
 
@@ -91,9 +98,12 @@ chrome is Swedish; the Network page follows.
 - **Drag to reorder**, persisted.
 - **Export** the whole store to a JSON file; **import** a file, replacing everything.
 - **Hotkeys**: `n` on the hub → `/network`, `h` on `/network` → hub. Both inert while a note has
-  focus. A small visible hint on each page, because an invisible-only hotkey is one you forget you
-  built. The **page switcher UI is deliberately not in the MVP** — Robert: *"possibly some switcher,
-  but let's start with just the hotkey for now."*
+  focus. Charting put a small visible hint on *each* page, because an invisible-only hotkey is one
+  you forget you built. **Only the hub carries one now**: Robert cut `/network`'s footer at the
+  deploy ([06](./issues/06-prod-deploy.md)) — one reader, who does not need telling twice — so the
+  return trip is `h` or the back button and there is no tappable way back on a phone. The **page
+  switcher UI is deliberately not in the MVP** — Robert: *"possibly some switcher, but let's start
+  with just the hotkey for now."*
 
 ## Decisions so far
 
@@ -173,6 +183,19 @@ chrome is Swedish; the Network page follows.
   reason SortableJS is vendored — no build step, and no fetch that can fail; empty squares where the
   recovery buttons should be is the one failure this change could not afford. Not deployed.
 
+- [06 — The prod deploy](./issues/06-prod-deploy.md) — **the destination is reached: `/network` is
+  live at https://whats-happening-ashy.vercel.app and docked as a Safari web app.** The gate's one
+  prod-only question is answered — the bfcache hop *does* engage in production, where `vercel dev`
+  could never have shown it, and Robert's verdict is *"very minimal flashing, thats good enough for
+  now"*, so [01](./issues/01-network-route-and-hotkeys.md)'s `max-age=300` floor does its job. That
+  makes [08](./issues/08-one-document-view-swap.md) an improvement rather than a fix; it is not
+  retired, since one document removes the repaint instead of shrinking it. Shipped alongside the
+  deploy: the header lost its subtitle and the page lost its whole footer, at Robert's request, with
+  the asymmetric hint above as the accepted cost. The finding that outlives the ticket is the
+  **deploy chain** — the project was already git-connected with `main` as its production branch, and
+  the CLI deploy was never necessary; it had simply never fired because `main` had never been pushed.
+  Now a standing preference.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -198,8 +221,10 @@ In scope, but not yet sharp enough to ticket:
   Robert saw the repaint for himself and named the fix: *"cant we just let javascript decide which one
   to show?"* One document has no navigation to repaint, which retires the hop, the `max-age` floor
   under it and the hotkey handler duplicated across `lib/page.ts` and `public/network.js` all at once.
-  Deferred past the deploy gate at his call, not dropped — prod is also the only place the hop's
-  behaviour could have been observed, so if 08 is ever abandoned this question comes back with it.
+  Deferred past the deploy gate at his call, not dropped. **Prod has now observed it**
+  ([06](./issues/06-prod-deploy.md)): the hop engages, and the repaint is *"very minimal flashing,
+  thats good enough for now"* — so 08 is an improvement on something tolerable rather than a fix for
+  something broken. If 08 is ever abandoned, that is the state it leaves behind.
 - **Whether reordering needs a keyboard path.** [04](./issues/04-reorder-by-drag.md) shipped drag
   only: a card can be moved by pointer or touch and by nothing else, so ordering — which the map
   calls the information itself — is unreachable without a mouse. Not sharp enough to ticket because
