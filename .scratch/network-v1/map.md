@@ -81,7 +81,9 @@ chrome is Swedish; the Network page follows.
 
 - A **uniform responsive grid** of note cards, each capped in height with internal scroll, in
   explicit user order.
-- A **"+" tile as the first cell** — click it and you are typing in a new note.
+- A **"+" tile as the last cell** — click it and you are typing in a new note. Charting put it
+  first; Robert moved it to the end on seeing ticket 02, so it reads as the next empty slot rather
+  than as a toolbar. A new note appears where the tile was, at the end.
 - **Title and body both `contenteditable`**, saved debounced while typing and unconditionally on
   blur and `pagehide`.
 - **Delete behind a confirm**, on card hover. (Robert overrode the recommended undo-toast: *"confirm
@@ -116,6 +118,19 @@ chrome is Swedish; the Network page follows.
   non-editable strip to grab. Persist on `onUpdate`, reading order back off the DOM. Native HTML5
   DnD was judged genuinely close but loses on touch and on owning the grid-insertion logic. Full
   findings: [research/03-drag-and-drop.md](./research/03-drag-and-drop.md).
+
+- [02 — The store, the grid, and in-line editing](./issues/02-notes-store-and-inline-editing.md) —
+  the page is genuinely usable: notes create, edit, delete and survive a restart. The store is its
+  own module (`public/store.js`) holding one versioned JSON document under
+  `whats-happening:network`, and `network.js` became an ES module to import it — separate files, no
+  build step. **A corrupt or unwritable store freezes the page rather than starting empty**: banner,
+  raw JSON for recovery, grid hidden, every save path blocked, because a banner that lets the next
+  keystroke overwrite the evidence is worse than none. Robert's change on seeing it: **the "+" tile
+  moved to the end** of the grid, and new notes now land there with it. Two things fall out for
+  later tickets: every card already has a non-editable top strip, which is exactly the drag handle
+  [03](./issues/03-drag-and-drop-research.md) said 04 would need, so **04 needs no new chrome**; and
+  `store.js` already exposes `rawText()`, which is most of 05's export. Verified with 29 headless
+  Chrome checks over CDP plus 13 node checks on the store's failure modes. Not deployed.
 
 ## Not yet specified
 

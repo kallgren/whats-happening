@@ -38,11 +38,19 @@
     </div>
   </header>
 
-  <!-- Ticket 02 fills this. It ships empty on purpose: this ticket is the
-       route, the stylesheet and the key handling, and nothing else. -->
+  <!-- Ticket 02. The banner stands *above* the grid rather than inside it:
+       when it appears the grid is hidden, because a store that cannot be read
+       must not be silently replaced by an empty one. -->
+  <div class="failed" id="trouble" hidden></div>
+
+  <!-- The "+" tile is the grid's last cell, not a button above it — one click
+       and you are typing in a new note. network.js renders the note cards ahead
+       of it, so the tile is always the empty slot at the end. -->
   <div class="notes" id="notes">
-    <p class="quiet">Inga anteckningar ännu.</p>
+    <button type="button" class="note-add" id="add" aria-label="Ny anteckning">+</button>
   </div>
+
+  <p class="quiet" id="empty" hidden>Inga anteckningar ännu — klicka på + för att skriva den första.</p>
 
   <footer class="pagefoot">
     <p class="hotkey"><a href="/">Vad händer</a> — eller tryck <kbd>h</kbd></p>
@@ -51,6 +59,8 @@
 
 </div>
 
-<script src="/network.js"></script>
+<!-- A module, so store.js can be a separate file with no build step. Modules
+     are deferred, so the DOM is parsed before anything in it runs. -->
+<script type="module" src="/network.js"></script>
 </body>
 </html>
