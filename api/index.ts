@@ -37,9 +37,31 @@ export default async function handler(_req: unknown, res: any) {
   // sources are back.
   const degraded = forecast.error || cinema.failed.length > 0;
   const maxAge = error ? 60 : degraded ? 300 : 3600;
+
+  // Network v1, ticket 01. `s-maxage` is shared-cache only, so before this the
+  // browser had no freshness lifetime of its own and revalidated on every
+  // navigation — which is what made pressing `h` back to the hub feel like a
+  // reload, and what makes `vercel dev` (no CDN at all) re-scrape on every
+  // single request.
+  //
+  // A browser-side lifetime turns that return trip into a disk-cache hit: no
+  // request, no scrape. It is the floor under the bfcache hop in
+  // public/network.js rather than a replacement for it — the hop is still what
+  // makes the switch instant *and* preserves scroll position, but it depends on
+  // the browser agreeing to freeze the page, and an extension content script or
+  // an open DevTools panel is enough to refuse it. This works either way.
+  //
+  // Capped well under the edge's hour: the visible cost is that "uppdaterad
+  // HH:MM" can lag by this much, and a stale clock on a page whose whole claim
+  // is freshness is worth more than the round trip it saves. Failures keep
+  // their own short backoff, so a dead source is never pinned in a browser for
+  // longer than it is pinned at the edge.
+  const browserMaxAge = Math.min(maxAge, 300);
   res.setHeader(
     "cache-control",
-    maxAge === 3600 ? "s-maxage=3600, stale-while-revalidate=86400" : `s-maxage=${maxAge}`,
+    maxAge === 3600
+      ? `max-age=${browserMaxAge}, s-maxage=3600, stale-while-revalidate=86400`
+      : `max-age=${browserMaxAge}, s-maxage=${maxAge}`,
   );
   res.status(200).send(html);
 }

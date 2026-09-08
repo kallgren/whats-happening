@@ -317,3 +317,24 @@ h2 .hint { text-transform: none; letter-spacing: 0; font-weight: 400; }
      recognition, not browsing — see the map's "Not yet specified". */
   .slices .thumb { width: 3.25rem; }
 }
+
+/* --- the hotkey hint ---
+   Network v1, ticket 01. `n` goes to the notes page and `h` comes back, and an
+   invisible-only hotkey is one you forget you built — so each page says so in
+   its footer.
+
+   The hint is also the link, deliberately. The map cut the switcher UI from the
+   MVP, but a phone has no keyboard to press `n` on, and a page reachable only
+   by typing its URL is a page that does not exist. This is the smallest thing
+   that keeps both pages reachable without becoming a switcher. */
+.pagefoot .hotkey {
+  margin: 0 0 .5rem;
+  font-size: .8rem;
+}
+.pagefoot .hotkey a { color: var(--accent); font-weight: 500; }
+kbd {
+  font: inherit; font-size: .95em;
+  background: var(--card); border: 1px solid var(--line);
+  border-bottom-width: 2px; border-radius: 4px;
+  padding: .05em .35em; color: var(--ink);
+}

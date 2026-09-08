@@ -11,6 +11,12 @@ After this ticket the page is genuinely usable — 03/04 make it good, 05 makes 
 
 ### Settled before this ticket
 
+- **Save on `pagehide`, never on `unload`.** From
+  [01](./01-network-route-and-hotkeys.md): an `unload` listener disqualifies the page from the
+  browser's back/forward cache, which is what makes `h`/`n` switch instantly without a reload.
+  `pagehide` is bfcache-safe and fires on freeze, so it is both the correct save hook and the one
+  that preserves the hop.
+
 - **A note is a title plus free-form multiline text.** Nothing else. Plain text, newlines preserved;
   a list of people is just lines. No markdown, no checkboxes, no schema. See the map's glossary for
   why the generality is deliberate.

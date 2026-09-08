@@ -360,6 +360,7 @@ ${filmBody(cinema)}
   </div>
 
   <footer class="pagefoot">
+    <p class="hotkey"><a href="/network">Nätverk</a> — eller tryck <kbd>n</kbd></p>
     Väderdata från <a href="${LINKS.smhiHome}" target="_blank" rel="noopener">SMHI</a>
     (<a href="${LINKS.ccby}" target="_blank" rel="noopener">CC BY 4.0</a>), bearbetad till dygnsvärden.
     Evenemang från <a href="${LINKS.heja}" target="_blank" rel="noopener">hejauppsala</a>.
@@ -368,6 +369,38 @@ ${filmBody(cinema)}
   </footer>
 
 </div>
+
+<!-- The first client-side script this page has ever carried, and it stays
+     that way on purpose: the hub's defining property is that the page arrives
+     complete, so nothing here may be load-bearing for the content. It is
+     inline rather than a file for the same reason — an external script the hub
+     has to fetch is a fetch that can fail. If this never runs, the footer link
+     still goes to /network.
+
+     "hop" prefers a history traversal over a fresh navigation so the
+     destination comes back from the browser's back/forward cache: no request,
+     no reload, no flash. It matters far more in the other direction — /network
+     is a static file, while this page is a scrape — so the mirror of this in
+     public/network.js is the one doing the real work. See the comment there.
+
+     Nothing on this page may ever register an unload listener: that
+     disqualifies it from the bfcache and is what would make the return trip
+     slow again. -->
+<script>
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "n" || e.isComposing || e.defaultPrevented) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  var el = document.activeElement;
+  if (el && (el.isContentEditable || /^(input|textarea|select)$/i.test(el.tagName))) return;
+  var from = null;
+  try { from = new URL(document.referrer); } catch (err) {}
+  if (from && from.origin === location.origin && from.pathname === "/network" && history.length > 1) {
+    history.back();
+  } else {
+    location.href = "/network";
+  }
+});
+</script>
 </body>
 </html>
 `;

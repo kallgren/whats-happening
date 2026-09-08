@@ -68,6 +68,12 @@ chrome is Swedish; the Network page follows.
   before there are two devices.
 - **Structure is deferred on purpose.** Plain text, newlines preserved. A list of people is just
   lines. Lines can become anything later; a schema can't.
+- **Prod deploy is one gate at the end, not per ticket.** Changed by Robert while testing 01:
+  *"no prod deploy until I've tested it myself. we'll probably do prod deploy when the whole feature
+  is in place."* Tickets are done when they work against `vercel dev` and Robert has looked; the
+  destination's "live and in daily use" is reached in one deploy once 02–05 are in. Run the dev
+  server with **`npm start`** — the `dev` script could never work, since `vercel dev` refuses to
+  start when it finds itself in the package's `dev` script.
 - **In-line editing means in-line.** No modal, no detail view. The focused card grows in place to
   fit its content and collapses back on blur.
 
@@ -90,6 +96,18 @@ chrome is Swedish; the Network page follows.
 ## Decisions so far
 
 <!-- one line per closed ticket: gist + link -->
+
+- [01 — Ship the /network route and the hotkeys](./issues/01-network-route-and-hotkeys.md) —
+  the shell is built and works locally: `public/network.html` behind a `vercel.json` rewrite,
+  `network.css` for the grid, the hint-that-is-also-a-link in both footers, and the two hotkeys with
+  their contenteditable focus guard. The addition Robert asked for on seeing it: switching **does
+  not reload**. Both handlers prefer `history.back()` over `location.href` when `document.referrer`
+  says the previous entry is the target. But the fix that actually worked was one level down and had
+  nothing to do with the hotkeys: `api/index.ts` sent **`s-maxage` only** — shared-cache only — so
+  the browser revalidated on every navigation and `vercel dev`, which has no CDN, re-scraped every
+  time. It now sends `max-age=300` alongside, making the return trip a disk-cache hit in any
+  browser. **Constraint this creates for every later ticket: never register an `unload` listener** —
+  it disqualifies the page from the bfcache. `pagehide` is safe. Not deployed; see the deploy gate.
 
 - [03 — Drag-and-drop for a grid of contenteditable cards](./issues/03-drag-and-drop-research.md) —
   drag-and-drop is **SortableJS 1.15.7**, vendored as `public/sortable.min.js` (45 KB, MIT, UMD,
@@ -119,11 +137,22 @@ In scope, but not yet sharp enough to ticket:
   whether the grid is usable on a phone (cheap — the grid is responsive and the drag library handles
   touch) and whether the notes follow him there (expensive — see the sync note above). The first may
   be answerable without the second.
+- **Whether the bfcache hop earns its keep.** Ticket 01's `history.back()` fires correctly but Arc
+  refuses the restore — Robert still sees a repaint, and a real bfcache restore repaints nothing.
+  The `max-age` underneath it is what makes switching fast today, so the hop is currently dead code
+  in his daily browser. It stays because it is ~8 lines, it is the only thing that preserves scroll
+  position, and it may well engage in a clean profile or on the phone — but nobody has watched it
+  work. Worth five minutes in plain Chrome and in Safari on the phone once the feature is deployed;
+  if it never engages anywhere, delete it and keep the header.
 - **Whether the hotkey wants company.** The switcher was cut from the MVP, not rejected. If the app
   ever has a third page the hotkey stops scaling, and that is when to look at it.
 - **Whether the hub and Network should share more than CSS.** Right now they share a stylesheet and
   nothing else — different routes, different render paths, no shared chrome component. If a header
-  or switcher becomes common to both, that is the moment the duplication starts costing.
+  or switcher becomes common to both, that is the moment the duplication starts costing. Ticket 01
+  produced the first concrete instance: the hotkey handler exists twice, once inline in `lib/page.ts`
+  and once in `public/network.js`, deliberately duplicated because the hub must not gain a runtime
+  dependency on a script it can fail to fetch. Two copies of ~10 lines is cheap; a third page would
+  not be.
 
 ## Out of scope
 

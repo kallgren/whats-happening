@@ -1,0 +1,20 @@
+/* The Network page, on top of the hub's style.css — which supplies the custom
+   properties, the typography, .wrap, .pagehead, .quiet and .pagefoot. Only what
+   is specific to the notes grid belongs here.
+
+   Ticket 01 ships the grid empty. Ticket 02 puts cards in it, 04 makes them
+   draggable. */
+
+/* A uniform responsive grid, not Keep-style masonry: every card the same width,
+   in explicit user order. auto-fill rather than auto-fit so a single note stays
+   one card's width instead of stretching across the whole page — the order is
+   the information, and a row of one wide box does not read as a list.
+
+   16rem is the width at which a card holds a plausible list of names without
+   wrapping them, and at which a 72rem .wrap fits four across. */
+.notes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: .75rem;
+  align-items: start;
+}

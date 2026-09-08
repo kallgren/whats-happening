@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Nätverk</title>
+<meta name="description" content="Anteckningar om folk och saker att göra — sparade i den här webbläsaren.">
+
+<!-- Same manifest as the hub: its scope is "/", so /network is inside the
+     installed app and a home-screen launch keeps both pages in one window. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#faf9f7">
+
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-180.png">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Nätverk">
+
+<!-- The hub's stylesheet first: the custom properties and the typography are
+     most of what makes this read as the same app. network.css only adds the
+     grid. -->
+<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="/network.css">
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="pagehead">
+    <div class="ph-title">
+      <h1>Nätverk</h1>
+      <p class="sub">Anteckningar — sparade bara i den här webbläsaren</p>
+    </div>
+  </header>
+
+  <!-- Ticket 02 fills this. It ships empty on purpose: this ticket is the
+       route, the stylesheet and the key handling, and nothing else. -->
+  <div class="notes" id="notes">
+    <p class="quiet">Inga anteckningar ännu.</p>
+  </div>
+
+  <footer class="pagefoot">
+    <p class="hotkey"><a href="/">Vad händer</a> — eller tryck <kbd>h</kbd></p>
+    Anteckningarna finns bara i den här webbläsaren. Rensar du webbplatsdata försvinner de.
+  </footer>
+
+</div>
+
+<script src="/network.js"></script>
+</body>
+</html>
