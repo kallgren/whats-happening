@@ -95,6 +95,13 @@ let frozen = false;
  * the page entirely, the reason is stated, and the raw text is put on screen
  * where it can be copied out and repaired by hand — it is JSON, and the notes
  * inside it are readable even when the wrapper is not.
+ *
+ * Ticket 07 made this banner load-bearing in a way it was not before. The two
+ * header buttons are the only controls that survive a freeze, and they no
+ * longer carry their words — so the recovery has to be spelled out *here*,
+ * naming both the action and the glyph. This is the half of the icon change
+ * that is not cosmetic: the words did not get deleted, they moved to the one
+ * place that is read when they matter.
  */
 function fail(reason, raw) {
   frozen = true;
@@ -107,7 +114,11 @@ function fail(reason, raw) {
 
   const why = document.createElement("p");
   why.className = "why";
-  why.textContent = reason + " Sidan skriver ingenting så länge, så texten nedan finns kvar orörd.";
+  why.textContent =
+    reason +
+    " Sidan skriver ingenting så länge, så texten nedan finns kvar orörd." +
+    " Spara undan den med Exportera — pilen ned uppe till höger — och återställ sedan" +
+    " med Importera, pilen upp bredvid, från en fil som fungerar.";
   banner.append(why);
 
   if (raw) {
@@ -588,7 +599,7 @@ async function importFile(file) {
   // that the bytes on screen are about to go, and that Exportera is how to keep
   // them. Otherwise the cost is countable, so count it.
   const what = frozen
-    ? `Importera ${countNotes(read.notes.length)}?\n\nDet skadade innehåll som visas på sidan skrivs över. Vill du behålla det, avbryt och tryck Exportera först.`
+    ? `Importera ${countNotes(read.notes.length)}?\n\nDet skadade innehåll som visas på sidan skrivs över. Vill du behålla det, avbryt och tryck Exportera — pilen ned uppe till höger — först.`
     : `Importera ${countNotes(read.notes.length)}?\n\nAlla ${countNotes(notes.length)} som finns här nu tas bort. Det går inte att ångra.`;
   if (!confirm(what)) return;
 

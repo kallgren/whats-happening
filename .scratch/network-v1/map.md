@@ -162,6 +162,17 @@ chrome is Swedish; the Network page follows.
   Chrome checks run against both a static server and `vercel dev`, plus 19 node checks on the store.
   Not deployed — that is [06](./issues/06-prod-deploy.md).
 
+- [07 — Icons for export and import](./issues/07-icon-actions.md) — the two header buttons are inline
+  SVG arrows now, with the Swedish words moved to `aria-label` and `title` rather than deleted. The
+  decision worth keeping is not the glyphs: those buttons are the **only** controls that survive
+  [02](./issues/02-notes-store-and-inline-editing.md)'s corrupt-store freeze, so dropping their
+  labels moved a load-bearing instruction off the screen. Robert took option (a) — icons always, and
+  the **freeze banner now names the recovery in words**, glyph included ("export first, *pilen ned
+  uppe till höger*, then import a working file"), as does the frozen branch of the import confirm.
+  Rejected: two rendering modes for one button. Inline SVG rather than an icon font, for the same
+  reason SortableJS is vendored — no build step, and no fetch that can fail; empty squares where the
+  recovery buttons should be is the one failure this change could not afford. Not deployed.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket:
@@ -182,13 +193,13 @@ In scope, but not yet sharp enough to ticket:
   whether the grid is usable on a phone (cheap — the grid is responsive and the drag library handles
   touch) and whether the notes follow him there (expensive — see the sync note above). The first may
   be answerable without the second.
-- **Whether the bfcache hop earns its keep.** Ticket 01's `history.back()` fires correctly but Arc
-  refuses the restore — Robert still sees a repaint, and a real bfcache restore repaints nothing.
-  The `max-age` underneath it is what makes switching fast today, so the hop is currently dead code
-  in his daily browser. It stays because it is ~8 lines, it is the only thing that preserves scroll
-  position, and it may well engage in a clean profile or on the phone — but nobody has watched it
-  work. Worth five minutes in plain Chrome and in Safari on the phone once the feature is deployed;
-  if it never engages anywhere, delete it and keep the header.
+- **~~Whether the bfcache hop earns its keep.~~** Graduated into
+  [08 — One document, and the view swap that replaces navigating](./issues/08-one-document-view-swap.md).
+  Robert saw the repaint for himself and named the fix: *"cant we just let javascript decide which one
+  to show?"* One document has no navigation to repaint, which retires the hop, the `max-age` floor
+  under it and the hotkey handler duplicated across `lib/page.ts` and `public/network.js` all at once.
+  Deferred past the deploy gate at his call, not dropped — prod is also the only place the hop's
+  behaviour could have been observed, so if 08 is ever abandoned this question comes back with it.
 - **Whether reordering needs a keyboard path.** [04](./issues/04-reorder-by-drag.md) shipped drag
   only: a card can be moved by pointer or touch and by nothing else, so ordering — which the map
   calls the information itself — is unreachable without a mouse. Not sharp enough to ticket because

@@ -148,7 +148,22 @@
 .act {
   font: inherit; font-size: .85rem;
   background: var(--card); border: 1px solid var(--line); border-radius: 999px;
-  padding: .3rem .7rem; color: var(--ink); cursor: pointer;
+  color: var(--ink); cursor: pointer;
+
+  /* Ticket 07: a circle, not a pill. With the label gone the horizontal
+     padding has nothing to sit around, so the button is sized from the glyph
+     and kept square — an equal-padded 1rem icon. grid centres it without the
+     inline-layout baseline wobble a lone <svg> in a button otherwise gets. */
+  display: grid; place-items: center;
+  padding: .4rem;
+}
+.act svg {
+  /* Sized in rem so it tracks the page's type rather than the viewport, and
+     drawn in currentColor so :hover recolours the glyph along with the border
+     without the SVG having to know about the accent. */
+  width: 1rem; height: 1rem; display: block;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 .act:hover { border-color: var(--accent); color: var(--accent); }
 .act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

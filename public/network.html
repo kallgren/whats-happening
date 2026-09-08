@@ -43,8 +43,24 @@
          writes the damaged bytes to a file before anything touches them — and
          import is the recovery. Both stay live while the page is frozen. -->
     <div class="ph-acts">
-      <button type="button" class="act" id="export">Exportera</button>
-      <button type="button" class="act" id="import">Importera</button>
+      <!-- Ticket 07. Icons, not labels — but the words do not disappear, they
+           move to aria-label and title, so the button is still named for a
+           screen reader and still says what it is on hover. The SVG is inline
+           rather than an icon font or a sprite file for the same reason
+           SortableJS is vendored: no build step, and no fetch that can fail.
+           Empty squares where the recovery buttons should be is the one
+           failure this page cannot afford. aria-hidden on the glyph itself,
+           so the accessible name is the label and not the label read twice. -->
+      <button type="button" class="act" id="export" aria-label="Exportera" title="Exportera">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+        </svg>
+      </button>
+      <button type="button" class="act" id="import" aria-label="Importera" title="Importera">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 15V3"/><path d="M7 8l5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+        </svg>
+      </button>
       <!-- The real file picker. A button opens it, because a bare file input
            cannot be styled and reads as a form field on a page that has none. -->
       <input type="file" id="importfile" accept="application/json,.json" hidden>
